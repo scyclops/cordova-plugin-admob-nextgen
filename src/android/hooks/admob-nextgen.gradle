@@ -1,0 +1,12 @@
+// https://developers.google.com/admob/android/next-gen/migration#exclude_comgoogleandroidgms_modules_in_mediation_integrations
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+// Prevent conflicts with legacy SDKs when using mediation
+configurations.configureEach {
+    exclude group: "com.google.android.gms", module: "play-services-ads"
+    exclude group: "com.google.android.gms", module: "play-services-ads-lite"
+}

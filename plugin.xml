@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-admob-nextgen" version="1.0.0" 
+        xmlns="http://apache.org/cordova/ns/plugins/1.0" 
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <name>AdMob Next Gen</name>
+    <description>Google Mobile Ads Next Gen SDK for Cordova</description>
+    <author>EMI INDO</author>
+    <license>MIT</license>
+
+    <js-module name="AdMobNextGen" src="www/admob-nextgen.js">
+        <clobbers target="admobNextGen" />
+    </js-module>
+
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="AdMobNextGen">
+                <param name="android-package" value="com.emi.cordova.admob.nextgen.AdMobNextGen" />
+            </feature>
+        </config-file>
+
+        <config-file parent="/manifest/application" target="AndroidManifest.xml">
+            <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="$APP_ID_ANDROID"/>
+        </config-file>
+        
+        <config-file parent="/*" target="AndroidManifest.xml">
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        </config-file>
+
+        <framework src="src/android/hooks/admob-nextgen.gradle" custom="true" type="gradleReference" />
+
+        <framework src="com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:$NEXT_GEN_SDK_VERSION" />
+        <framework src="com.google.android.ump:user-messaging-platform:$UMP_VERSION" />
+
+        <source-file src="src/android/AdMobNextGen.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/BannerExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/BannerPreloadExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/NativeExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/AppOpenAdExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/InterstitialExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/RewardedExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/RewardedInterstitialExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/ConsentExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        <source-file src="src/android/GlobalSettingsExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
+        
+    </platform>
+
+    <preference name="NEXT_GEN_SDK_VERSION" default="0.23.0-beta01" />
+    <preference name="UMP_VERSION" default="4.0.0" />
+    <preference name="APP_ID_ANDROID" default="ca-app-pub-3940256099942544~3347511713" />
+
+</plugin>

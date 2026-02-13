@@ -1,0 +1,42 @@
+{
+  "name": "cordova-plugin-admob-nextgen",
+  "version": "1.0.0",
+  "description": "Google Mobile Ads Next Gen SDK for Cordova. High performance and modular architecture.",
+  "cordova": {
+    "id": "cordova-plugin-admob-nextgen",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/swaplab-engine/cordova-plugin-admob-nextgen.git"
+  },
+  "files": [
+    "www/",
+    "src/",
+    "plugin.xml",
+    "README.md",
+    "package.json",
+    "LICENSE",
+    "capacitor-hook-admob-ids.js"
+  ],
+  "keywords": [
+    "cordova",
+    "admob",
+    "google",
+    "ads",
+    "nextgen",
+    "cordova-admob",
+    "capacitor-admob",
+    "framework7-admob",
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "EMI INDO",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/issues"
+  },
+  "homepage": "https://github.com/swaplab-engine/cordova-plugin-admob-nextgen#readme"
+}

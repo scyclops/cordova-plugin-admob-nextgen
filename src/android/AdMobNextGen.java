@@ -1,0 +1,306 @@
+package com.emi.cordova.admob.nextgen;
+
+import android.app.Activity;
+import android.app.Application; 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.os.Build; 
+import android.os.Bundle;
+import android.util.Log;
+import android.view.WindowInsets; 
+import android.view.WindowInsetsController; 
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
+import com.google.android.libraries.ads.mobile.sdk.MobileAds;
+import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration;
+import com.google.android.libraries.ads.mobile.sdk.initialization.InitializationConfig;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class AdMobNextGen extends CordovaPlugin {
+
+    private static final String TAG = "AdMobNextGen";
+    private BannerExecutor bannerExecutor;
+    private AppOpenAdExecutor appOpenAdExecutor;
+    private InterstitialExecutor interstitialExecutor;
+    private RewardedExecutor rewardedExecutor;
+    private RewardedInterstitialExecutor rewardedInterstitialExecutor;
+    private ConsentExecutor consentExecutor;
+    private GlobalSettingsExecutor globalSettingsExecutor;
+    private NativeExecutor nativeExecutor;
+
+    private BannerPreloadExecutor bannerPreloadExecutor;
+
+    @Override
+    public void pluginInitialize() {
+        super.pluginInitialize();
+
+        applyAdMobAPI35WorkaroundIfNeeded(cordova.getActivity().getApplication());
+
+        bannerExecutor = new BannerExecutor(cordova, webView);
+        interstitialExecutor = new InterstitialExecutor(cordova, webView);
+        rewardedExecutor = new RewardedExecutor(cordova, webView);
+        rewardedInterstitialExecutor = new RewardedInterstitialExecutor(cordova, webView);
+        consentExecutor = new ConsentExecutor(cordova, webView);
+        globalSettingsExecutor = new GlobalSettingsExecutor(cordova);
+
+        appOpenAdExecutor = AppOpenAdExecutor.getInstance();
+        appOpenAdExecutor.initialize(cordova, webView);
+        nativeExecutor = new NativeExecutor(cordova, webView);
+
+        bannerPreloadExecutor = new BannerPreloadExecutor(cordova, webView);
+    }
+
+    @Override
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+
+        if ("setAppVolume".equals(action)) {
+            globalSettingsExecutor.setAppVolume(args, callbackContext);
+            return true;
+        }
+        if ("setAppMuted".equals(action)) {
+            globalSettingsExecutor.setAppMuted(args, callbackContext);
+            return true;
+        }
+        if ("setRequestConfiguration".equals(action)) {
+            globalSettingsExecutor.setRequestConfiguration(args, callbackContext);
+            return true;
+        }
+
+        if ("requestConsentInfo".equals(action)) {
+            consentExecutor.requestConsentInfo(args, callbackContext);
+            return true;
+        }
+        if ("showPrivacyOptionsForm".equals(action)) {
+            consentExecutor.showPrivacyOptionsForm(callbackContext);
+            return true;
+        }
+        if ("canRequestAds".equals(action)) {
+            consentExecutor.canRequestAds(callbackContext);
+            return true;
+        }
+        if ("getTCData".equals(action)) {
+            consentExecutor.getTCData(callbackContext);
+            return true;
+        }
+
+        if ("initialize".equals(action)) {
+            this.initializeSDK(args, callbackContext);
+            return true;
+        }
+
+        if ("createBanner".equals(action)) {
+            bannerExecutor.createBanner(args, callbackContext);
+            return true;
+        }
+        if ("hideBanner".equals(action)) {
+            bannerExecutor.hideBanner(callbackContext);
+            return true;
+        }
+        if ("showBanner".equals(action)) {
+            bannerExecutor.showBanner(callbackContext);
+            return true;
+        }
+
+        if ("startBannerPreload".equals(action)) {
+            bannerPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+        if ("showPreloadedBanner".equals(action)) {
+            bannerPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+        if ("stopBannerPreload".equals(action)) {
+            bannerPreloadExecutor.stopPreloadAndClear();
+            callbackContext.success();
+            return true;
+        }
+
+        if ("removeBanner".equals(action)) {
+            bannerExecutor.destroy();
+            callbackContext.success();
+            return true;
+        }
+
+        if ("loadAppOpenAd".equals(action)) {
+            if (appOpenAdExecutor != null) {
+                appOpenAdExecutor.loadAd(args, callbackContext);
+            }
+            return true;
+        }
+
+        if ("showAppOpenAd".equals(action)) {
+            if (appOpenAdExecutor != null) {
+                appOpenAdExecutor.showAdIfAvailable(cordova.getActivity());
+            }
+            callbackContext.success();
+            return true;
+        }
+
+        if ("setAppOpenAutoShow".equals(action)) {
+            boolean shouldShow = args.getBoolean(0);
+            if (appOpenAdExecutor != null) {
+                appOpenAdExecutor.setAutoShow(shouldShow);
+            }
+            callbackContext.success();
+            return true;
+        }
+
+        if ("createNativeAd".equals(action)) {
+            nativeExecutor.createNativeAd(args, callbackContext);
+            return true;
+        }
+        if ("removeNativeAd".equals(action)) {
+            nativeExecutor.removeNativeAd();
+            callbackContext.success();
+            return true;
+        }
+
+        if ("createInterstitial".equals(action)) {
+            interstitialExecutor.createInterstitial(args, callbackContext);
+            return true;
+        }
+        if ("showInterstitial".equals(action)) {
+            interstitialExecutor.showInterstitial(callbackContext);
+            return true;
+        }
+
+        if ("createRewarded".equals(action)) {
+            rewardedExecutor.createRewarded(args, callbackContext);
+            return true;
+        }
+        if ("showRewarded".equals(action)) {
+            rewardedExecutor.showRewarded(callbackContext);
+            return true;
+        }
+
+        if ("createRewardedInterstitial".equals(action)) {
+            rewardedInterstitialExecutor.createRewardedInterstitial(args, callbackContext);
+            return true;
+        }
+        if ("showRewardedInterstitial".equals(action)) {
+            rewardedInterstitialExecutor.showRewardedInterstitial(callbackContext);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public void onResume(boolean multitasking) {
+        super.onResume(multitasking);
+        if (appOpenAdExecutor != null && appOpenAdExecutor.shouldAutoShow()) {
+            appOpenAdExecutor.showAdIfAvailable(cordova.getActivity());
+        }
+    }
+
+    private void initializeSDK(JSONArray args, CallbackContext callbackContext) {
+        String appId = getAppIdFromManifest();
+        if (appId == null) {
+            callbackContext.error("AdMob App ID missing");
+            return;
+        }
+
+        cordova.getThreadPool().execute(() -> {
+            try {
+                InitializationConfig.Builder initConfigBuilder = new InitializationConfig.Builder(appId);
+
+                JSONObject configJson = args.optJSONObject(0);
+
+                if (configJson != null) {
+
+                    RequestConfiguration requestConfig = GlobalSettingsExecutor.buildRequestConfiguration(configJson);
+                    initConfigBuilder.setRequestConfiguration(requestConfig);
+                }
+
+                InitializationConfig config = initConfigBuilder.build();
+
+                MobileAds.initialize(
+                        cordova.getActivity(),
+                        config,
+                        initializationStatus -> {
+                            cordova.getActivity().runOnUiThread(() -> callbackContext.success("Initialized"));
+                        }
+                );
+            } catch (Exception e) {
+                cordova.getActivity().runOnUiThread(() -> callbackContext.error(e.getMessage()));
+            }
+        });
+    }
+
+    private String getAppIdFromManifest() {
+        try {
+            Context context = cordova.getActivity().getApplicationContext();
+            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(
+                    context.getPackageName(), PackageManager.GET_META_DATA);
+            Bundle bundle = ai.metaData;
+            return bundle.getString("com.google.android.gms.ads.APPLICATION_ID");
+        } catch (Exception e) { return null; }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (bannerExecutor != null) bannerExecutor.destroy();
+        super.onDestroy();
+    }
+
+    public static void applyAdMobAPI35WorkaroundIfNeeded(Application application) {
+
+        if (Build.VERSION.SDK_INT < 35) {
+            return;
+        }
+
+        application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {}
+
+            @Override
+            public void onActivityStarted(@NonNull Activity activity) {
+                applyAPI35WorkaroundToActivity(activity);
+            }
+
+            @Override
+            public void onActivityResumed(@NonNull Activity activity) {
+                applyAPI35WorkaroundToActivity(activity);
+            }
+
+            @Override
+            public void onActivityPaused(@NonNull Activity activity) {}
+
+            @Override
+            public void onActivityStopped(@NonNull Activity activity) {}
+
+            @Override
+            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {}
+
+            @Override
+            public void onActivityDestroyed(@NonNull Activity activity) {}
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    private static void applyAPI35WorkaroundToActivity(Activity activity) {
+
+        if (!"com.google.android.gms.ads.AdActivity".equals(activity.getClass().getName())) {
+            return;
+        }
+
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController c = activity.getWindow().getInsetsController();
+            if (c != null) {
+
+                c.hide(WindowInsets.Type.systemBars());
+                c.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_DEFAULT);
+            }
+        }
+    }
+}
