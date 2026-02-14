@@ -81,6 +81,9 @@ Add this to your `config.xml` to restore the plugin automatically.
 ## For Capacitor users
 **[⚡ Capacitor Integration: Automated Setup for AdMob Next Gen ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/1)**.
 
+**[⚡ AdMob Next Gen - Starter Templates 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-template)**.
+
+
 ---
 
 ## 2. Configuration & Initialization (CRITICAL)
