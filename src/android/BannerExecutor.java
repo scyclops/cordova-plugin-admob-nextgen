@@ -53,6 +53,9 @@ public class BannerExecutor {
 
     private int lastAdHeight = 0;
 
+    private int systemSafeTop = 0;
+    private int systemSafeBottom = 0;
+
     private long lastLoadTime = 0;
     private long minLoadInterval = 5000;
 
@@ -301,20 +304,30 @@ public class BannerExecutor {
 
         if (adLayout == null) {
             adLayout = new RelativeLayout(cordova.getActivity());
+
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                     RelativeLayout.LayoutParams.MATCH_PARENT,
-                    RelativeLayout.LayoutParams.MATCH_PARENT);
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+            if ("top".equalsIgnoreCase(currentPosition)) {
+                params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            } else {
+                params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            }
+
             adLayout.setClickable(false);
             adLayout.setFocusable(false);
             cordova.getActivity().addContentView(adLayout, params);
         }
 
+        isBannerVisible = true;
         updateBannerLayout();
 
         adLayout.bringToFront();
         adLayout.setVisibility(View.VISIBLE);
+        adView.setVisibility(View.VISIBLE);
+
         updateWebViewMargins();
-        isBannerVisible = true;
     }
 
     private void updateBannerLayout() {
@@ -340,12 +353,37 @@ public class BannerExecutor {
         } else {
             adView.setLayoutParams(bannerParams);
         }
-    }
 
-    private void hideBannerView() {
-        if (adLayout != null) adLayout.setVisibility(View.GONE);
-        resetWebViewMargins();
-        isBannerVisible = false;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+            adLayout.setOnApplyWindowInsetsListener((v, insets) -> {
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    systemSafeTop = insets.getInsets(android.view.WindowInsets.Type.systemBars()).top;
+                    systemSafeBottom = insets.getInsets(android.view.WindowInsets.Type.systemBars()).bottom;
+                } else {
+                    systemSafeTop = insets.getSystemWindowInsetTop();
+                    systemSafeBottom = insets.getSystemWindowInsetBottom();
+                }
+
+                if (adView != null && adView.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) adView.getLayoutParams();
+                    if ("top".equalsIgnoreCase(currentPosition)) {
+                        params.topMargin = systemSafeTop;
+                        params.bottomMargin = 0;
+                    } else {
+                        params.bottomMargin = systemSafeBottom;
+                        params.topMargin = 0;
+                    }
+                    adView.setLayoutParams(params);
+                }
+
+                updateWebViewMargins();
+
+                return insets;
+            });
+            adLayout.requestApplyInsets();
+        }
+
     }
 
     private void updateWebViewMargins() {
@@ -357,31 +395,49 @@ public class BannerExecutor {
         if (lp instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
 
-            if (isOverlapping) {
+            if ("top".equalsIgnoreCase(currentPosition)) {
+
                 params.setMargins(0, 0, 0, 0);
-            } else {
-                if ("top".equalsIgnoreCase(currentPosition)) {
-                    params.setMargins(0, lastAdHeight, 0, 0);
+
+                if (isBannerVisible && !isOverlapping) {
+                    float shift = (float) (lastAdHeight + systemSafeTop);
+                    webViewView.setTranslationY(shift);
+
                 } else {
-                    params.setMargins(0, 0, 0, lastAdHeight);
+                    webViewView.setTranslationY(0);
+
                 }
             }
+
+            else {
+
+                webViewView.setTranslationY(0);
+
+                if (!isBannerVisible || isOverlapping) {
+                    params.setMargins(0, 0, 0, 0);
+                } else {
+
+                    int finalBottom = lastAdHeight + systemSafeBottom;
+                    params.setMargins(0, 0, 0, finalBottom);
+
+                }
+            }
+
             webViewView.setLayoutParams(params);
             webViewView.requestLayout();
         }
     }
 
-    private void resetWebViewMargins() {
-        if (webView == null || webView.getView() == null) return;
-        View webViewView = webView.getView();
-        ViewGroup.LayoutParams lp = webViewView.getLayoutParams();
+    private void hideBannerView() {
+        if (adLayout == null || adView == null) return;
 
-        if (lp instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
-            params.setMargins(0, 0, 0, 0);
-            webViewView.setLayoutParams(params);
-            webViewView.requestLayout();
-        }
+        isBannerVisible = false;
+
+        adView.setVisibility(View.GONE);
+        adLayout.setVisibility(View.GONE);
+
+        updateWebViewMargins();
+
     }
 
     public void hideBanner(CallbackContext callbackContext) {
@@ -404,7 +460,9 @@ public class BannerExecutor {
 
     private void destroyBannerInternal() {
         if (adView != null) {
-            resetWebViewMargins();
+            isBannerVisible = false; 
+            updateWebViewMargins();  
+
             if (adView.getParent() != null) {
                 ((ViewGroup) adView.getParent()).removeView(adView);
             }

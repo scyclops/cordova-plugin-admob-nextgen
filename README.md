@@ -4,6 +4,10 @@
 [![AdMob Next Gen](https://img.shields.io/badge/SDK-Google%20Mobile%20Ads%20Next--Gen-blue)](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
+[![NPM version](https://img.shields.io/npm/v/cordova-plugin-admob-nextgen.svg)](https://www.npmjs.com/package/cordova-plugin-admob-nextgen)
+[![Downloads](https://img.shields.io/npm/dm/cordova-plugin-admob-nextgen.svg)](https://www.npmjs.com/package/cordova-plugin-admob-nextgen)
+[![License](https://img.shields.io/npm/l/cordova-plugin-admob-nextgen.svg)](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/blob/main/LICENSE)
+
 **The Ultimate AdMob Monetization Solution for Cordova/Capacitor/Framework7.**
 
 This plugin is a complete **rewrite and re-architecture** of the classic AdMob integration, built specifically for the **[Google Mobile Ads Next Generation SDK](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html)**. It moves away from legacy implementations to modern `SurfaceControl`, optimized layouts, and background threading, ensuring maximum performance, stability, and revenue.
