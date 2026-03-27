@@ -30,6 +30,14 @@ var AdMobNextGen = {
         exec(success, error, 'AdMobNextGen', 'getTCData', []);
     },
 
+    requestTrackingAuthorization: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'requestTrackingAuthorization', []);
+    },
+
+    getTrackingAuthorizationStatus: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'getTrackingAuthorizationStatus', []);
+    },
+
     // Inisialisasi SDK
     initialize: function (config, success, error) {
         var args = [];

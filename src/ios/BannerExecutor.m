@@ -1,0 +1,353 @@
+#import "BannerExecutor.h"
+#import "AdMobNextGen.h"
+
+@interface BannerExecutor()
+
+@property (nonatomic, weak) AdMobNextGen *plugin;
+@property (nonatomic, strong) GADBannerView *bannerView;
+
+@property (nonatomic, strong) NSString *lastAdUnitId;
+@property (nonatomic, strong) NSString *lastSizeStr;
+@property (nonatomic, strong) NSString *currentPosition;
+@property (nonatomic, strong) NSString *lastPosition;
+@property (nonatomic, assign) GADAdSize lastAdSize;
+
+@property (nonatomic, assign) BOOL isBannerVisible;
+@property (nonatomic, assign) BOOL isLoading;
+@property (nonatomic, assign) BOOL isOverlapping;
+@property (nonatomic, assign) BOOL isAutoShow;
+@property (nonatomic, assign) BOOL isCollapsible;
+
+@property (nonatomic, assign) CGFloat activeBannerHeight;
+
+@property (nonatomic, assign) NSTimeInterval lastLoadTime;
+@property (nonatomic, assign) NSTimeInterval minLoadInterval;
+
+@end
+
+@implementation BannerExecutor
+
+- (instancetype)initWithPlugin:(AdMobNextGen *)plugin {
+    self = [super init];
+    if (self) {
+        self.plugin = plugin;
+        self.lastAdUnitId = @"";
+        self.lastSizeStr = @"";
+        self.currentPosition = @"bottom";
+        self.lastPosition = @"bottom";
+
+        self.isBannerVisible = NO;
+        self.isLoading = NO;
+        self.isOverlapping = YES;
+        self.isAutoShow = YES;
+        self.isCollapsible = NO;
+
+        self.activeBannerHeight = 0;
+        self.lastLoadTime = 0;
+        self.minLoadInterval = 5.0;
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutViews)
+                                                     name:UIDeviceOrientationDidChangeNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Main Methods
+
+- (void)createBanner:(NSDictionary *)options command:(CDVInvokedUrlCommand *)command {
+    NSString *adUnitId = options[@"adUnitId"];
+    NSString *requestedSize = options[@"size"] ? options[@"size"] : @"ADAPTIVE";
+    NSString *newPosition = options[@"position"] ? options[@"position"] : self.currentPosition;
+
+    BOOL newIsOverlapping = options[@"isOverlapping"] ? [options[@"isOverlapping"] boolValue] : YES;
+    BOOL newIsAutoShow = options[@"isAutoShow"] ? [options[@"isAutoShow"] boolValue] : YES;
+    BOOL newIsCollapsible = options[@"collapsible"] ? [options[@"collapsible"] boolValue] : NO;
+    NSTimeInterval newMinLoadInterval = options[@"retryInterval"] ? [options[@"retryInterval"] doubleValue] / 1000.0 : 5.0;
+
+    if (!adUnitId) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"adUnitId is required."];
+        [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSTimeInterval currentTime = [[NSDate date] timeIntervalSince1970];
+
+        if (self.isLoading) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Banner loading"];
+            [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
+
+        BOOL isSameId = [self.lastAdUnitId isEqualToString:adUnitId];
+        BOOL isSameSize = [self.lastSizeStr isEqualToString:requestedSize];
+
+        self.isOverlapping = newIsOverlapping;
+        self.isAutoShow = newIsAutoShow;
+        self.isCollapsible = newIsCollapsible;
+        self.minLoadInterval = newMinLoadInterval;
+        self.currentPosition = newPosition;
+
+        if (self.bannerView != nil && isSameId && isSameSize) {
+            if (self.isAutoShow) {
+
+                [self showBannerInternal];
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Banner Updated (Cached)"];
+                [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            } else {
+                [self hideBannerInternal];
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Banner Hidden (Cached)"];
+                [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+            [self sendLoadedEvent:self.lastAdSize isCollapsible:self.isCollapsible isRefresh:NO];
+            return;
+        }
+
+        if ((currentTime - self.lastLoadTime) < self.minLoadInterval) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Request too fast."];
+            [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
+
+        self.lastPosition = self.currentPosition;
+        [self loadBanner:adUnitId size:requestedSize command:command];
+    });
+}
+
+- (void)loadBanner:(NSString *)adUnitId size:(NSString *)sizeStr command:(CDVInvokedUrlCommand *)command {
+    [self destroyBannerInternal];
+
+    self.isLoading = YES;
+    self.lastLoadTime = [[NSDate date] timeIntervalSince1970];
+    self.lastAdUnitId = adUnitId;
+    self.lastSizeStr = sizeStr;
+
+    UIViewController *rootViewController = self.plugin.viewController;
+
+    GADAdSize adSize = [self getAdSize:sizeStr];
+    self.lastAdSize = adSize;
+
+    self.bannerView = [[GADBannerView alloc] initWithAdSize:adSize];
+    self.bannerView.adUnitID = adUnitId;
+    self.bannerView.rootViewController = rootViewController;
+    self.bannerView.delegate = self;
+
+    self.bannerView.hidden = YES;
+
+    __weak typeof(self) weakSelf = self;
+    self.bannerView.paidEventHandler = ^(GADAdValue * _Nonnull value) {
+        NSString *jsonStr = [NSString stringWithFormat:@"{\"value\":%lld, \"currency\":\"%@\", \"precision\":%ld}",
+                             value.value.longLongValue, value.currencyCode, (long)value.precision];
+        [weakSelf.plugin fireEvent:@"document" event:@"on.banner.revenue" withData:jsonStr];
+    };
+
+    [rootViewController.view addSubview:self.bannerView];
+
+    GADRequest *request = [GADRequest request];
+
+    if (self.isCollapsible) {
+        GADExtras *extras = [[GADExtras alloc] init];
+        NSString *anchor = [self.currentPosition isEqualToString:@"top"] ? @"top" : @"bottom";
+        extras.additionalParameters = @{@"collapsible": anchor};
+        [request registerAdNetworkExtras:extras];
+    }
+
+    [self.bannerView loadRequest:request];
+
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Banner creation initiated."];
+    [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (GADAdSize)getAdSize:(NSString *)sizeStr {
+    if ([sizeStr isEqualToString:@"BANNER"]) return GADAdSizeBanner;
+    if ([sizeStr isEqualToString:@"LARGE_BANNER"]) return GADAdSizeLargeBanner;
+    if ([sizeStr isEqualToString:@"MEDIUM_RECTANGLE"]) return GADAdSizeMediumRectangle;
+    if ([sizeStr isEqualToString:@"FULL_BANNER"]) return GADAdSizeFullBanner;
+    if ([sizeStr isEqualToString:@"LEADERBOARD"]) return GADAdSizeLeaderboard;
+
+    UIViewController *rootViewController = self.plugin.viewController;
+    CGRect frame = rootViewController.view.frame;
+    if (@available(iOS 11.0, *)) {
+        frame = UIEdgeInsetsInsetRect(rootViewController.view.frame, rootViewController.view.safeAreaInsets);
+    }
+    return GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(frame.size.width);
+}
+
+#pragma mark - NATIVE FRAME MANIPULATION (THE DEFINITIVE WAY)
+
+- (void)layoutViews {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIView *webView = self.plugin.webView;
+        UIView *superView = webView.superview;
+
+        if (!webView || !superView) return;
+
+        CGRect superBounds = superView.bounds;
+        CGRect webFrame = superBounds;
+
+        if (self.bannerView && self.activeBannerHeight > 0) {
+
+            CGFloat safeTop = 0;
+            if (@available(iOS 11.0, *)) {
+                UIWindow *window = UIApplication.sharedApplication.keyWindow;
+                if (!window) window = superView.window;
+                safeTop = window.safeAreaInsets.top;
+            }
+
+            CGRect bannerFrame = CGRectMake(0, 0, superBounds.size.width, self.activeBannerHeight);
+            if ([self.currentPosition isEqualToString:@"top"]) {
+
+                bannerFrame.origin.y = self.isOverlapping ? 0 : safeTop;
+            } else {
+
+                bannerFrame.origin.y = superBounds.size.height - self.activeBannerHeight;
+            }
+            self.bannerView.frame = bannerFrame;
+
+            self.bannerView.hidden = !self.isBannerVisible;
+
+            if (self.isBannerVisible && !self.isOverlapping) {
+                if ([self.currentPosition isEqualToString:@"top"]) {
+
+                    webFrame.origin.y = bannerFrame.origin.y + self.activeBannerHeight;
+                    webFrame.size.height = superBounds.size.height - webFrame.origin.y;
+                } else {
+
+                    webFrame.origin.y = 0;
+                    webFrame.size.height = bannerFrame.origin.y;
+                }
+            }
+        } else {
+            if (self.bannerView) self.bannerView.hidden = YES;
+        }
+
+        webView.frame = webFrame;
+
+        if (self.bannerView) {
+            [superView bringSubviewToFront:self.bannerView];
+        }
+    });
+}
+
+#pragma mark - Smart Visibility Control
+
+- (void)showBannerInternal {
+    if (self.bannerView) {
+        self.isBannerVisible = YES;
+        [self layoutViews]; 
+    }
+}
+
+- (void)hideBannerInternal {
+    if (self.bannerView) {
+        self.isBannerVisible = NO;
+        [self layoutViews]; 
+    }
+}
+
+- (void)destroyBannerInternal {
+    if (self.bannerView) {
+        self.isBannerVisible = NO;
+        self.activeBannerHeight = 0;
+
+        [self layoutViews]; 
+
+        [self.bannerView removeFromSuperview];
+        self.bannerView.delegate = nil;
+        self.bannerView = nil;
+    }
+}
+
+- (void)showBanner:(CDVInvokedUrlCommand *)command {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.bannerView) {
+            [self showBannerInternal];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        } else {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No banner loaded"];
+            [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+    });
+}
+
+- (void)hideBanner:(CDVInvokedUrlCommand *)command {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self hideBannerInternal];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    });
+}
+
+- (void)removeBanner:(CDVInvokedUrlCommand *)command {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self destroyBannerInternal];
+        self.lastAdUnitId = @"";
+        self.lastSizeStr = @"";
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    });
+}
+
+#pragma mark - Helper Events
+
+- (void)sendLoadedEvent:(GADAdSize)adSize isCollapsible:(BOOL)isCollapsible isRefresh:(BOOL)isRefresh {
+    NSString *jsonStr = [NSString stringWithFormat:@"{\"width\":%f, \"height\":%f, \"isCollapsible\":%s}",
+                         adSize.size.width, adSize.size.height, isCollapsible ? "true" : "false"];
+
+    if (isRefresh) {
+        [self.plugin fireEvent:@"document" event:@"on.banner.refreshed" withData:nil];
+    } else {
+        [self.plugin fireEvent:@"document" event:@"on.banner.load" withData:jsonStr];
+    }
+}
+
+#pragma mark - GADBannerViewDelegate
+
+- (void)bannerViewDidReceiveAd:(GADBannerView *)bannerView {
+    BOOL isRefresh = !self.isLoading;
+    self.isLoading = NO;
+
+    self.activeBannerHeight = bannerView.adSize.size.height;
+    if (self.activeBannerHeight == 0) {
+        self.activeBannerHeight = self.lastAdSize.size.height;
+    }
+
+    [self sendLoadedEvent:self.lastAdSize isCollapsible:self.isCollapsible isRefresh:isRefresh];
+
+    if (self.isAutoShow && !self.isBannerVisible) {
+        [self showBannerInternal];
+    } else {
+        [self layoutViews];
+    }
+}
+
+- (void)bannerView:(GADBannerView *)bannerView didFailToReceiveAdWithError:(NSError *)error {
+    self.isLoading = NO;
+    NSString *jsonStr = [NSString stringWithFormat:@"{\"code\":%ld, \"message\":\"%@\"}", (long)error.code, [error localizedDescription]];
+    [self.plugin fireEvent:@"document" event:@"on.banner.failed" withData:jsonStr];
+}
+
+- (void)bannerViewDidRecordImpression:(GADBannerView *)bannerView {
+    [self.plugin fireEvent:@"document" event:@"on.banner.impression" withData:nil];
+}
+
+- (void)bannerViewDidRecordClick:(GADBannerView *)bannerView {
+    [self.plugin fireEvent:@"document" event:@"on.banner.clicked" withData:nil];
+}
+
+- (void)bannerViewWillPresentScreen:(GADBannerView *)bannerView {
+    [self.plugin fireEvent:@"document" event:@"on.banner.opened" withData:nil];
+}
+
+- (void)bannerViewDidDismissScreen:(GADBannerView *)bannerView {
+    [self.plugin fireEvent:@"document" event:@"on.banner.closed" withData:nil];
+}
+
+@end

@@ -1,6 +1,7 @@
 # Cordova AdMob Next-Gen Plugin
 
 [![Android](https://img.shields.io/badge/Platform-Android-green?logo=android)](https://www.android.com)
+[![iOS](https://img.shields.io/badge/Platform-iOS-lightgrey?logo=apple)](https://www.apple.com/ios)
 [![AdMob Next Gen](https://img.shields.io/badge/SDK-Google%20Mobile%20Ads%20Next--Gen-blue)](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
@@ -69,15 +70,16 @@ We prioritize the safety of your AdMob account and the stability of your app.
 ### Option A: Via CLI
 Install the plugin directly using the Cordova CLI. You must provide your AdMob App ID.
 
-    cordova plugin add cordova-plugin-admob-nextgen --save --variable APP_ID_ANDROID="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy"
+    cordova plugin add cordova-plugin-admob-nextgen --save --variable APP_ID_ANDROID="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" --variable APP_ID_IOS="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy"
 
 ### Option B: Via config.xml
 Add this to your `config.xml` to restore the plugin automatically.
 
     <plugin name="cordova-plugin-admob-nextgen" spec="latest">
         <variable name="APP_ID_ANDROID" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
+        <variable name="APP_ID_IOS" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
         
-        <variable name="NEXT_GEN_SDK_VERSION" value="0.23.0-beta01" />
+        <variable name="NEXT_GEN_SDK_VERSION" value="0.25.0-beta01" />
         <variable name="UMP_VERSION" value="4.0.0" />
     </plugin>
 
@@ -153,7 +155,30 @@ Add this to your `config.xml` to restore the plugin automatically.
         });
 
 
-   
+### App Tracking Transparency (ATT / IDFA) - iOS Only
+For iOS 14+, Apple requires you to prompt the user before tracking their IDFA. 
+The plugin provides manual control over this prompt so you can display it at the right time in your app's lifecycle.
+
+```
+function checkAppTracking() {
+    admobNextGen.requestTrackingAuthorization(
+        function(status) {
+            console.log("ATT Status: " + status); 
+            // Returns: 'AUTHORIZED', 'DENIED', 'NOT_DETERMINED', 'RESTRICTED'
+            
+            // Regardless of the ATT choice, initialize the SDK
+            startSdk();
+        },
+        function(err) {
+            console.warn("ATT Request Failed", err);
+            startSdk();
+        }
+    );
+}
+
+// You can also silently check the status anytime:
+// admobNextGen.getTrackingAuthorizationStatus(success, error);
+```   
 
 ### Step 3: Check Consent Status (Smart Analysis)
 You can check if the user has granted permission for Personalized Ads without parsing complex IAB strings manually.
