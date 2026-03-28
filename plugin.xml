@@ -139,6 +139,8 @@
         <source-file src="src/ios/AdMobNextGen.m" />
         <header-file src="src/ios/ConsentExecutor.h" />
         <source-file src="src/ios/ConsentExecutor.m" />
+        <header-file src="src/ios/GlobalSettingsExecutor.h" />
+        <source-file src="src/ios/GlobalSettingsExecutor.m" />
         <header-file src="src/ios/AppOpenAdExecutor.h" />
         <source-file src="src/ios/AppOpenAdExecutor.m" />
         <header-file src="src/ios/BannerExecutor.h" />

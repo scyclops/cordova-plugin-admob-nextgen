@@ -240,7 +240,7 @@ Supports **Adaptive**, **Standard**, and **Collapsible** banners.
 
 ---
 
-## 4. Native Ads (Advanced Overlay)
+## 4. Native Ads (Advanced Overlay) - Android Only
 
 High-performance native templates.
 
@@ -283,7 +283,7 @@ High-performance native templates.
 
 ---
 
-## 5. Ad Preloading (Banner)
+## 5. Ad Preloading (Banner) - Android Only
 
 Use the background engine to pool ads for 0ms latency.
 

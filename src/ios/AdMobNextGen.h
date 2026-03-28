@@ -12,6 +12,10 @@
 - (void)requestTrackingAuthorization:(CDVInvokedUrlCommand*)command;
 - (void)getTrackingAuthorizationStatus:(CDVInvokedUrlCommand*)command;
 
+- (void)setAppVolume:(CDVInvokedUrlCommand*)command;
+- (void)setAppMuted:(CDVInvokedUrlCommand*)command;
+- (void)setRequestConfiguration:(CDVInvokedUrlCommand*)command;
+
 - (void)createBanner:(CDVInvokedUrlCommand*)command;
 - (void)showBanner:(CDVInvokedUrlCommand*)command;
 - (void)hideBanner:(CDVInvokedUrlCommand*)command;

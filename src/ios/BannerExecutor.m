@@ -195,9 +195,35 @@
 
             CGFloat safeTop = 0;
             if (@available(iOS 11.0, *)) {
-                UIWindow *window = UIApplication.sharedApplication.keyWindow;
-                if (!window) window = superView.window;
-                safeTop = window.safeAreaInsets.top;
+
+                UIWindow *window = webView.window;
+
+                if (!window) {
+                    if (@available(iOS 13.0, *)) {
+                        for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
+                            if (windowScene.activationState == UISceneActivationStateForegroundActive) {
+                                for (UIWindow *w in windowScene.windows) {
+                                    if (w.isKeyWindow) {
+                                        window = w;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (window) break;
+                        }
+                    }
+                }
+
+                if (!window) {
+                    #pragma clang diagnostic push
+                    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+                    window = UIApplication.sharedApplication.keyWindow;
+                    #pragma clang diagnostic pop
+                }
+
+                if (window) {
+                    safeTop = window.safeAreaInsets.top;
+                }
             }
 
             CGRect bannerFrame = CGRectMake(0, 0, superBounds.size.width, self.activeBannerHeight);

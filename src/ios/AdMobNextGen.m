@@ -1,5 +1,6 @@
 #import "AdMobNextGen.h"
 #import "ConsentExecutor.h"
+#import "GlobalSettingsExecutor.h"
 #import "BannerExecutor.h"
 #import "InterstitialExecutor.h"
 #import "RewardedExecutor.h"
@@ -8,6 +9,7 @@
 
 @interface AdMobNextGen()
 @property (nonatomic, strong) ConsentExecutor *consentExecutor;
+@property (nonatomic, strong) GlobalSettingsExecutor *globalSettingsExecutor;
 @property (nonatomic, strong) BannerExecutor *bannerExecutor;
 @property (nonatomic, strong) InterstitialExecutor *interstitialExecutor; 
 @property (nonatomic, strong) RewardedExecutor *rewardedExecutor;
@@ -19,6 +21,7 @@
 - (void)pluginInitialize {
     [super pluginInitialize];
     self.consentExecutor = [[ConsentExecutor alloc] initWithPlugin:self];
+    self.globalSettingsExecutor = [[GlobalSettingsExecutor alloc] initWithPlugin:self];
     self.bannerExecutor = [[BannerExecutor alloc] initWithPlugin:self];
     self.interstitialExecutor = [[InterstitialExecutor alloc] initWithPlugin:self]; 
     self.rewardedExecutor = [[RewardedExecutor alloc] initWithPlugin:self];
@@ -53,6 +56,10 @@
     [self.consentExecutor getTCData:command];
 }
 
+- (void)canRequestAds:(CDVInvokedUrlCommand *)command {
+    [self.consentExecutor canRequestAds:command];
+}
+
 - (void)requestTrackingAuthorization:(CDVInvokedUrlCommand *)command {
     [self.consentExecutor requestTrackingAuthorization:command];
 }
@@ -61,17 +68,18 @@
     [self.consentExecutor getTrackingAuthorizationStatus:command];
 }
 
-#pragma mark - AppOpenAd Routing
+#pragma mark - Global Settings Routing
 
-- (void)loadAppOpenAd:(CDVInvokedUrlCommand*)command {
-    NSDictionary *options = [command.arguments objectAtIndex:0];
-    if (options != nil) {
-        [[AppOpenAdExecutor sharedInstance] loadAppOpenAd:options command:command];
-    }
+- (void)setAppVolume:(CDVInvokedUrlCommand*)command {
+    [self.globalSettingsExecutor setAppVolume:command];
 }
 
-- (void)showAppOpenAd:(CDVInvokedUrlCommand*)command {
-    [[AppOpenAdExecutor sharedInstance] showAppOpenAd:command];
+- (void)setAppMuted:(CDVInvokedUrlCommand*)command {
+    [self.globalSettingsExecutor setAppMuted:command];
+}
+
+- (void)setRequestConfiguration:(CDVInvokedUrlCommand*)command {
+    [self.globalSettingsExecutor setRequestConfiguration:command];
 }
 
 #pragma mark - Banner Routing
@@ -114,8 +122,6 @@
     [self.interstitialExecutor showInterstitial:command];
 }
 
-#pragma mark - Rewarded Routing
-
 - (void)createRewarded:(CDVInvokedUrlCommand*)command {
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil) {
@@ -127,7 +133,16 @@
     [self.rewardedExecutor showRewarded:command];
 }
 
-#pragma mark - Rewarded Interstitial Routing
+- (void)loadAppOpenAd:(CDVInvokedUrlCommand*)command {
+    NSDictionary *options = [command.arguments objectAtIndex:0];
+    if (options != nil) {
+        [[AppOpenAdExecutor sharedInstance] loadAppOpenAd:options command:command];
+    }
+}
+
+- (void)showAppOpenAd:(CDVInvokedUrlCommand*)command {
+    [[AppOpenAdExecutor sharedInstance] showAppOpenAd:command];
+}
 
 - (void)createRewardedInterstitial:(CDVInvokedUrlCommand*)command {
     NSDictionary *options = [command.arguments objectAtIndex:0];
