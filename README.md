@@ -78,9 +78,6 @@ Add this to your `config.xml` to restore the plugin automatically.
     <plugin name="cordova-plugin-admob-nextgen" spec="latest">
         <variable name="APP_ID_ANDROID" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
         <variable name="APP_ID_IOS" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
-        
-        <variable name="NEXT_GEN_SDK_VERSION" value="0.25.0-beta01" />
-        <variable name="UMP_VERSION" value="4.0.0" />
     </plugin>
 
 
@@ -89,8 +86,9 @@ Add this to your `config.xml` to restore the plugin automatically.
 
 **[⚡ AdMob Next Gen - Starter Templates 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-template)**.
 
-
 ---
+
+**[⚡ FULL Cordova - simple example 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main/simple-example/www/js)**.
 
 ## 2. Configuration & Initialization (CRITICAL)
 
