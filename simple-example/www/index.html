@@ -25,7 +25,7 @@
             color: var(--text-main);
             margin: 0;
             padding: 0;
-            padding-bottom: 40px;
+            padding-bottom: 90px;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -83,6 +83,11 @@
             font-weight: normal;
         }
 
+        .badge-hot {
+            background: #ffe4e6;
+            color: #e11d48;
+        }
+
         /* Grid for Buttons */
         .btn-grid {
             display: grid;
@@ -110,102 +115,204 @@
             transform: scale(0.97);
         }
 
-        /* Specific Button Colors */
         .btn-load { background-color: var(--primary); }
         .btn-show { background-color: var(--success); }
         .btn-hide { background-color: var(--warning); }
         .btn-remove { background-color: var(--danger); }
         .btn-alt { background-color: var(--purple); }
+        .btn-full { grid-column: span 2; }
 
-        /* Full width button utility */
-        .btn-full {
-            grid-column: span 2;
+        /* ==========================================
+           1. TERMINAL LOGGER UI
+           ========================================== */
+        .logger-wrapper {
+            margin: 0 16px 20px 16px;
+            background-color: #0f172a;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .logger-header {
+            background-color: #1e293b;
+            color: #94a3b8;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            font-family: monospace;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .btn-clear {
+            background: transparent;
+            border: 1px solid #475569;
+            color: #cbd5e1;
+            font-size: 0.65rem;
+            padding: 4px 10px;
+            width: auto;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #logger {
+            height: 250px;
+            overflow-y: auto;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            color: #e2e8f0;
+            text-align: left;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .log-time { color: #38bdf8; }
+        .log-event { color: #4ade80; }
+        .log-warn { color: #fbbf24; }
+        .log-reward { color: #f472b6; font-weight: bold; text-decoration: underline; }
+
+
+        .push-detector {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: repeating-linear-gradient(
+              45deg,
+              #ffeb3b,
+              #ffeb3b 15px,
+              #222 15px,
+              #222 30px
+            );
+            color: #ffffff;
+            text-align: center;
+            font-weight: 900;
+            font-size: 13px;
+            padding: 10px 0;
+            border-top: 3px solid #000;
+            z-index: 9999;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+            text-shadow: 1px 1px 3px #000;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>AdMob Next Gen</h1>
-        <p>Cordova Plugin Integration Tester</p>
-    </header>
+<header>
+    <h1>AdMob Next Gen</h1>
+    <p>Cordova Plugin Integration Tester</p>
+</header>
 
-    <div class="card">
-        <div class="card-header">
-            Banner Ad
-            <span class="badge">Adaptive / Collapsible</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-load btn-full" onclick="createBannerAds()">Create Banner</button>
-            <button class="btn-show" onclick="showBannerAds()">Show</button>
-            <button class="btn-hide" onclick="hideBannerAds()">Hide</button>
-            <button class="btn-remove btn-full" onclick="removeBannerAds()">Remove Banner</button>
-        </div>
+<div class="card">
+    <div class="card-header">
+        Banner Ad
+        <span class="badge">Adaptive / Collapsible</span>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            Interstitial Ad
-            <span class="badge">Fullscreen</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-load" onclick="createInterstitialAds()">Load Ad</button>
-            <button class="btn-show" onclick="showInterstitialAds()">Show Ad</button>
-        </div>
+    <div class="btn-grid">
+        <button class="btn-load btn-full" onclick="createBannerAds()">Create Banner</button>
+        <button class="btn-show" onclick="showBannerAds()">Show</button>
+        <button class="btn-hide" onclick="hideBannerAds()">Hide</button>
+        <button class="btn-remove btn-full" onclick="removeBannerAds()">Remove Banner</button>
     </div>
+</div>
 
-    <div class="card">
-        <div class="card-header">
-            Rewarded Ad
-            <span class="badge">Video Reward</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-alt" onclick="createRewardedAds()">Load Rewarded</button>
-            <button class="btn-show" onclick="showRewardedAds()">Show Rewarded</button>
-        </div>
+
+
+<div class="card">
+    <div class="card-header">
+        Interstitial Ad
+        <span class="badge">Fullscreen</span>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            Rewarded Interstitial
-            <span class="badge">Auto-Show Reward</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-alt" onclick="createRewardedInterstitialAds()">Load Interstitial</button>
-            <button class="btn-show" onclick="showRewardedInterstitialAds()">Show Interstitial</button>
-        </div>
+    <div class="btn-grid">
+        <button class="btn-load" onclick="createInterstitialAds()">Load Ad</button>
+        <button class="btn-show" onclick="showInterstitialAds()">Show Ad</button>
     </div>
+</div>
 
-    <div class="card">
-        <div class="card-header">
-            App Open Ad
-            <span class="badge">Startup Ad</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-load" onclick="loadAppOpenAds()">Load App Open</button>
-            <button class="btn-show" onclick="showAppOpenAds()">Show App Open</button>
-        </div>
+<div class="card">
+    <div class="card-header">
+        Rewarded Ad
+        <span class="badge">Video Reward</span>
     </div>
-
-    <div class="card">
-        <div class="card-header">
-            Native Ad Overlay
-            <span class="badge">Android Only</span>
-        </div>
-        <div class="btn-grid">
-            <button class="btn-load" onclick="createNativeAds()">Create Native</button>
-            <button class="btn-remove" onclick="removeNativeAds()">Remove Native</button>
-        </div>
+    <div class="btn-grid">
+        <button class="btn-alt" onclick="createRewardedAds()">Load Rewarded</button>
+        <button class="btn-show" onclick="showRewardedAds()">Show Rewarded</button>
     </div>
+</div>
 
-    <script type="text/javascript" src="cordova.js"></script>
-    <script src="js/deviceready.js"></script>
-    <script src="js/appOpenAd.js"></script>
-    <script src="js/bannerAd.js"></script>
-    <script src="js/nativeAd.js"></script>
-    <script src="js/interstitialAd.js"></script>
-    <script src="js/rewardedAd.js"></script>
-    <script src="js/rewardedInterstitialAd.js"></script>
+<div class="card">
+    <div class="card-header">
+        Rewarded Interstitial
+        <span class="badge">Auto-Show Reward</span>
+    </div>
+    <div class="btn-grid">
+        <button class="btn-alt" onclick="createRewardedInterstitialAds()">Load Interstitial</button>
+        <button class="btn-show" onclick="showRewardedInterstitialAds()">Show Interstitial</button>
+    </div>
+</div>
 
+<div class="card">
+    <div class="card-header">
+        App Open Ad
+        <span class="badge">Startup Ad</span>
+    </div>
+    <div class="btn-grid">
+        <button class="btn-load" onclick="loadAppOpenAds()">Load App Open</button>
+        <button class="btn-show" onclick="showAppOpenAds()">Show App Open</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Native Ad Overlay
+        <span class="badge">Android Only</span>
+    </div>
+    <div class="btn-grid">
+        <button class="btn-load" onclick="createNativeAds()">Create Native</button>
+        <button class="btn-remove" onclick="removeNativeAds()">Remove Native</button>
+    </div>
+</div>
+
+<div class="logger-wrapper">
+    <div class="logger-header">
+        <span>>_ SYSTEM LOGS</span>
+        <button class="btn-clear" onclick="document.getElementById('logger').innerHTML=''">CLEAR</button>
+    </div>
+    <div id="logger"></div>
+</div>
+
+<div class="push-detector">
+    ⬇️ WEBVIEW BOTTOM BOUNDARY ⬇️<br>
+    <span style="font-size: 10px; font-weight: normal; background: #000; padding: 2px 5px; border-radius: 4px;">
+            (If this moves up, the Webview is pushed)
+        </span>
+</div>
+
+<script type="text/javascript" src="cordova.js"></script>
+<script src="js/deviceready.js"></script>
+<script src="js/appOpenAd.js"></script>
+<script src="js/bannerAd.js"></script>
+<script src="js/nativeAd.js"></script>
+<script src="js/interstitialAd.js"></script>
+<script src="js/rewardedAd.js"></script>
+<script src="js/rewardedInterstitialAd.js"></script>
+
+<script>
+    window.logToScreen = function(message, type = 'info') {
+        var logger = document.getElementById('logger');
+        if (!logger) return;
+
+        var time = new Date().toLocaleTimeString();
+        var colorClass = '';
+        if (type === 'event') colorClass = 'log-event';
+        if (type === 'warn') colorClass = 'log-warn';
+        if (type === 'reward') colorClass = 'log-reward';
+
+        logger.innerHTML = '<span class="log-time">[' + time + ']</span> <span class="' + colorClass + '">' + message + '</span><br>' + logger.innerHTML;
+    };
+</script>
 </body>
 </html>

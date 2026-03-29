@@ -58,7 +58,13 @@ Move beyond simple 320x50 banners. The Native Overlay feature allows you to rend
 We prioritize the safety of your AdMob account and the stability of your app.
 
 * **Smart Throttling (`retryInterval`)**: Prevents accidental spamming of ad requests using a global interval validation.
-* **Background Thread Loading**: All ad requests are dispatched on background threads (`cordova.getThreadPool()`), ensuring your app's UI never freezes.
+
+- If the loadAd or showAd function is called repeatedly accidentally by JavaScript (for example because it is tied to a scroll event or application loop), the system will continuously call loadAd or showAd.
+### This will cause two fatal problems:
+1. Banner Ad Flickering: Ads are constantly being destroyed and redrawn.
+2. Account Ban: Aggressively pulling ads (spamming impressions) is a serious violation of AdMob's Invalid Traffic (IVT) policy.
+
+* **Background Thread Loading**: All ad requests are dispatched on background threads, ensuring your app's UI never freezes.
 
 ---
 
@@ -292,8 +298,9 @@ Use the background engine to pool ads for 0ms latency.
         adUnitId: 'ca-app-pub-xxx/xxx',
         size: 'ADAPTIVE',     // 'BANNER', 'LARGE_BANNER', 'MEDIUM_RECTANGLE', 'ADAPTIVE', 'FULL_BANNER', 'LEADERBOARD'
         position: 'bottom',   // 'top' or 'bottom'
-        collapsible: false,
-        isOverlapping: false // Coba mode Push
+        collapsible: false,   // true = Enable Collapsible Format (High Revenue)
+        isOverlapping: false, 
+        retryInterval: 5000   // Anti-spam delay (ms)
     });
 
     // 2. Show Instantly (from pool)
