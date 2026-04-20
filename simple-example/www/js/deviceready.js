@@ -50,18 +50,7 @@ document.addEventListener("deviceready", function () {
     if (window.logToScreen) window.logToScreen("Device Ready! Starting AdMob sequence...");
 
     // 1. SET GLOBAL CONFIGURATION
-    if (admobNextGen.setRequestConfiguration) {
-        admobNextGen.setRequestConfiguration({
-            maxAdContentRating: 'G',        // 'G', 'PG', 'T', 'MA'
-            tagForChildDirectedTreatment: true,
-            tagForUnderAgeOfConsent: true
-        }, function() {
-            if (window.logToScreen) window.logToScreen("Global Config Set (COPPA/TFUA)", "event");
-        }, function(err) {
-            console.error(err);
-        });
-    }
-
+    
     // Optional: Mute ads globally
     // admobNextGen.setAppVolume(0.5);
     // admobNextGen.setAppMuted(true);
@@ -76,7 +65,8 @@ document.addEventListener("deviceready", function () {
         
         admobNextGen.requestConsentInfo({
             debug: true, // Set to true for testing EEA geography
-            reset: false
+            reset: false,
+            tagForUnderAgeOfConsent: false
         }, function () {
             console.log("Consent Info Ready.");
             // UMP Success, continue to ATT or Init
@@ -117,7 +107,11 @@ document.addEventListener("deviceready", function () {
     function startSdk() {
         if (window.logToScreen) window.logToScreen("Initializing AdMob SDK...");
         
-        admobNextGen.initialize(function () {
+        admobNextGen.initialize({
+            maxAdContentRating: 'G',        // 'G' || 'PG' || 'T' || 'MA' || ""
+            tagForChildDirectedTreatment: false,
+            tagForUnderAgeOfConsent: false
+        }, function () {
             console.log(">>> AdMob SDK Initialized & Ready <<<");
             if (window.logToScreen) window.logToScreen("✅ SDK READY TO SERVE ADS", "success");
             

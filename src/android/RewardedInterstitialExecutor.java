@@ -36,6 +36,7 @@ public class RewardedInterstitialExecutor {
     private boolean isLoading = false;
     private long lastLoadTime = 0;
     private long minLoadInterval = 5000;
+    private boolean isRewardEarned = false;
 
     public RewardedInterstitialExecutor(CordovaInterface cordova, CordovaWebView webView) {
         this.cordova = cordova;
@@ -121,6 +122,8 @@ public class RewardedInterstitialExecutor {
         cordova.getActivity().runOnUiThread(() -> {
             if (mRewardedInterstitialAd != null) {
 
+                isRewardEarned = false;
+
                 mRewardedInterstitialAd.setAdEventCallback(new RewardedInterstitialAdEventCallback() {
 
                     @Override
@@ -145,6 +148,10 @@ public class RewardedInterstitialExecutor {
 
                     @Override
                     public void onAdDismissedFullScreenContent() {
+
+                        if (!isRewardEarned) {
+                            fireEvent("on.rewardedInter.canceled", null);
+                        }
 
                         fireEvent("on.rewardedInter.dismissed", null);
                         mRewardedInterstitialAd = null;
@@ -175,6 +182,8 @@ public class RewardedInterstitialExecutor {
 
                 Activity activity = cordova.getActivity();
                 mRewardedInterstitialAd.show(activity, rewardItem -> {
+
+                    isRewardEarned = true;
 
                     try {
                         JSONObject data = new JSONObject();

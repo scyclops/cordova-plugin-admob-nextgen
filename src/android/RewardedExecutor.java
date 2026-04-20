@@ -35,6 +35,7 @@ public class RewardedExecutor {
 
     private boolean isLoading = false;
     private boolean isAutoShow = false;
+    private boolean isRewardEarned = false;
 
     private long lastLoadTime = 0;
     private long minLoadInterval = 5000;
@@ -145,6 +146,8 @@ public class RewardedExecutor {
 
         activity.runOnUiThread(() -> {
 
+            isRewardEarned = false;
+
             rewardedAd.setAdEventCallback(new RewardedAdEventCallback() {
 
                 @Override
@@ -172,6 +175,11 @@ public class RewardedExecutor {
 
                     rewardedAd = null;
                     isLoading = false;
+
+                    if (!isRewardEarned) {
+                        fireEvent("on.rewarded.canceled", null);
+                    }
+
                     fireEvent("on.rewarded.dismissed", null);
                 }
 
@@ -201,6 +209,8 @@ public class RewardedExecutor {
             rewardedAd.show(activity, new OnUserEarnedRewardListener() {
                 @Override
                 public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
+
+                    isRewardEarned = true;
 
                     try {
                         JSONObject rewardData = new JSONObject();

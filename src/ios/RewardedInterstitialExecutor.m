@@ -8,6 +8,7 @@
 
 @property (nonatomic, assign) BOOL isLoading;
 @property (nonatomic, assign) BOOL isAutoShow;
+@property (nonatomic, assign) BOOL isRewardEarned;
 
 @property (nonatomic, assign) NSTimeInterval lastLoadTime;
 @property (nonatomic, assign) NSTimeInterval minLoadInterval;
@@ -22,6 +23,7 @@
         self.plugin = plugin;
         self.isLoading = NO;
         self.isAutoShow = NO; 
+        self.isRewardEarned = NO;
         self.lastLoadTime = 0;
         self.minLoadInterval = 5.0; 
     }
@@ -143,8 +145,12 @@
 - (void)showRewardedInterstitialAd:(CDVInvokedUrlCommand *)command {
     if (self.rewardedInterstitialAd != nil) {
 
+        self.isRewardEarned = NO;
+
         [self.rewardedInterstitialAd presentFromRootViewController:self.plugin.viewController
                                           userDidEarnRewardHandler:^{
+
+            self.isRewardEarned = YES;
 
             GADAdReward *reward = self.rewardedInterstitialAd.adReward;
 
@@ -182,6 +188,9 @@
 
 - (void)adDidDismissFullScreenContent:(id<GADFullScreenPresentingAd>)ad {
 
+    if (!self.isRewardEarned) {
+        [self.plugin fireEvent:@"document" event:@"on.rewardedInter.canceled" withData:nil];
+    }
     self.rewardedInterstitialAd = nil;
     self.isLoading = NO;
     [self.plugin fireEvent:@"document" event:@"on.rewardedInter.dismissed" withData:nil];

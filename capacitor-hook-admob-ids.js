@@ -44,7 +44,7 @@ function updateGradleDependencies(nextGenVersion, umpVersion) {
     if (umpRegex.test(content)) content = content.replace(umpRegex, newUmp);
 
     fs.writeFileSync(gradlePath, content, 'utf8');
-    console.log(`[AdMob Hook] Success: Updated Android Next Gen SDK to ${nextGenVersion} and UMP to ${umpVersion}`);
+    //console.log(`[AdMob Hook] Success: Updated Android Next Gen SDK to ${nextGenVersion} and UMP to ${umpVersion}`);
 }
 
 function injectExclusionRules() {
@@ -62,7 +62,7 @@ function injectExclusionRules() {
 `;
     content += exclusionBlock;
     fs.writeFileSync(gradlePath, content, 'utf8');
-    console.log('[AdMob Hook] Success: Injected legacy SDK exclusion rules into build.gradle');
+   // console.log('[AdMob Hook] Success: Injected legacy SDK exclusion rules into build.gradle');
 }
 
 /**
@@ -72,7 +72,7 @@ function injectExclusionRules() {
  */
 function updateIosInfoPlist(appIdIos) {
     if (!fs.existsSync(iosPlistPath)) {
-        console.warn('[AdMob Hook] Warning: ios/App/App/Info.plist not found. Run "npx cap add ios" first.');
+        //console.warn('[AdMob Hook] Warning: ios/App/App/Info.plist not found. Run "npx cap add ios" first.');
         return;
     }
     
@@ -128,7 +128,7 @@ function updateIosInfoPlist(appIdIos) {
     }
 
     fs.writeFileSync(iosPlistPath, content, 'utf8');
-    console.log(`[AdMob Hook] Success: Updated iOS Info.plist with App ID (${appIdIos}), ATT prompt, and SKAdNetworks.`);
+    // console.log(`[AdMob Hook] Success: Updated iOS Info.plist with App ID (${appIdIos}), ATT prompt, and SKAdNetworks.`);
 }
 
 /**
@@ -139,7 +139,7 @@ function updateIosInfoPlist(appIdIos) {
 function run() {
     try {
         if (!fs.existsSync(configPath)) {
-            console.warn('[AdMob Hook] capacitor.config not found. Skipping auto-injection.');
+            // console.warn('[AdMob Hook] capacitor.config not found. Skipping auto-injection.');
             return;
         }
 
@@ -158,7 +158,7 @@ function run() {
             admob = {
                 APP_ID_ANDROID: appIdAndroid ? appIdAndroid[1] : "ca-app-pub-3940256099942544~3347511713",
                 APP_ID_IOS: appIdIos ? appIdIos[1] : "ca-app-pub-3940256099942544~1458002511",
-                NEXT_GEN_SDK_VERSION: sdk ? sdk[1] : "0.25.0-beta01",
+                NEXT_GEN_SDK_VERSION: sdk ? sdk[1] : "1.0.0",
                 UMP_VERSION: ump ? ump[1] : "4.0.0"
             };
         }
@@ -167,7 +167,7 @@ function run() {
         injectExclusionRules();
         if (admob?.NEXT_GEN_SDK_VERSION || admob?.UMP_VERSION) {
             updateGradleDependencies(
-                admob.NEXT_GEN_SDK_VERSION || "0.25.0-beta01",
+                admob.NEXT_GEN_SDK_VERSION || "1.0.0",
                 admob.UMP_VERSION || "4.0.0"
             );
         }

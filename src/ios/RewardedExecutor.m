@@ -8,6 +8,7 @@
 
 @property (nonatomic, assign) BOOL isLoading;
 @property (nonatomic, assign) BOOL isAutoShow;
+@property (nonatomic, assign) BOOL isRewardEarned;
 
 @property (nonatomic, assign) NSTimeInterval lastLoadTime;
 @property (nonatomic, assign) NSTimeInterval minLoadInterval;
@@ -22,6 +23,7 @@
         self.plugin = plugin;
         self.isLoading = NO;
         self.isAutoShow = NO; 
+        self.isRewardEarned = NO;
         self.lastLoadTime = 0;
         self.minLoadInterval = 5.0; 
     }
@@ -128,8 +130,12 @@
 - (void)showRewardedAd {
     if (self.rewardedAd == nil) return;
 
+    self.isRewardEarned = NO;
+
     [self.rewardedAd presentFromRootViewController:self.plugin.viewController
                           userDidEarnRewardHandler:^{
+
+        self.isRewardEarned = YES;
 
         GADAdReward *reward = self.rewardedAd.adReward;
 
@@ -155,6 +161,9 @@
 
 - (void)adDidDismissFullScreenContent:(id<GADFullScreenPresentingAd>)ad {
 
+    if (!self.isRewardEarned) {
+        [self.plugin fireEvent:@"document" event:@"on.rewarded.canceled" withData:nil];
+    }
     self.rewardedAd = nil; 
     self.isLoading = NO;
     [self.plugin fireEvent:@"document" event:@"on.rewarded.dismissed" withData:nil];
