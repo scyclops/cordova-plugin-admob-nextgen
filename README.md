@@ -102,12 +102,6 @@ Add this to your `config.xml` to restore the plugin automatically.
 
 ### Step 1: Global Configuration (Run First)
 
-    admobNextGen.setRequestConfiguration({
-        maxAdContentRating: 'G',        // 'G', 'PG', 'T', 'MA'
-        tagForChildDirectedTreatment: true, // true/false/null
-        tagForUnderAgeOfConsent: true       // true/false/null
-    });
-
     // Optional: Mute ads globally
     admobNextGen.setAppVolume(0.5);
     admobNextGen.setAppMuted(true);
@@ -117,7 +111,8 @@ Add this to your `config.xml` to restore the plugin automatically.
     // 1. Request Consent Information
     admobNextGen.requestConsentInfo({
         debug: false, // Set true for testing
-        reset: false
+        reset: false,
+        tagForUnderAgeOfConsent: false
     }, function() {
         console.log("Consent Info Ready.");
         startSdk();
@@ -143,7 +138,11 @@ Add this to your `config.xml` to restore the plugin automatically.
 
     // 3. Initialize the SDK
     function startSdk() {
-        admobNextGen.initialize(function() {
+        admobNextGen.initialize({
+            maxAdContentRating: 'G',  // 'G' || 'PG' || 'T' || 'MA' || ""
+            tagForChildDirectedTreatment: false,
+            tagForUnderAgeOfConsent: false
+        }, function() {
             console.log(">>> AdMob SDK Initialized & Ready <<<");
         }, function(err) {
             console.error("SDK Init Failed", err);
@@ -427,6 +426,7 @@ Supports Auto-Resume logic.
     on.rewarded.failed.show (obj)
     on.rewarded.revenue (obj)
     on.rewarded.shown
+    on.rewarded.canceled
     on.rewarded.dismissed
     on.rewarded.failed.show (obj)
     on.rewarded.impression
@@ -457,6 +457,7 @@ Auto-showing rewarded format (no opt-in).
     on.rewardedInter.failed.show (obj)
     on.rewardedInter.revenue (obj)
     on.rewardedInter.shown
+    on.rewardedInter.canceled
     on.rewardedInter.dismissed
     on.rewardedInter.failed.show (obj)
     on.rewardedInter.impression

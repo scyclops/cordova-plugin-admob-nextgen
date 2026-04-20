@@ -44,6 +44,11 @@ document.addEventListener('on.rewardedInter.shown', () => {
     if (window.logToScreen) window.logToScreen("Rew. Interstitial Shown", "event");
 });
 
+document.addEventListener('on.rewardedInter.canceled', () => {
+    console.log("on rewarded interstitial canceled");
+    if (window.logToScreen) window.logToScreen("Rew. Interstitial canceled", "event");
+});
+
 document.addEventListener('on.rewardedInter.failed.show', (e) => {
     var err = e.data || e;
     console.error("on rewarded interstitial failed show", err);

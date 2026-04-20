@@ -43,6 +43,11 @@ document.addEventListener('on.rewarded.shown', () => {
     if (window.logToScreen) window.logToScreen("Rewarded Ad Shown", "event");
 });
 
+document.addEventListener('on.rewarded.canceled', () => {
+    console.log("on rewarded canceled");
+    if (window.logToScreen) window.logToScreen("Rewarded Ad canceled", "event");
+});
+
 document.addEventListener('on.rewarded.failed.show', (e) => {
     var err = e.data || e;
     console.error("on rewarded failed show", err);
