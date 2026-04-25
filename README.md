@@ -87,8 +87,10 @@ Add this to your `config.xml` to restore the plugin automatically.
     </plugin>
 
 
+## Supporting Mediation: **[⚡ admob-mediation-suite ](https://github.com/swaplab-engine/admob-mediation-suite)** (Optional)
+
 ## For Capacitor users
-**[⚡ Capacitor Integration: Automated Setup for AdMob Next Gen ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/1)**.
+**[⚡ Capacitor Integration: Automated Setup for AdMob Next Gen ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/3)**.
 
 **[⚡ AdMob Next Gen - Starter Templates 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-template)**.
 

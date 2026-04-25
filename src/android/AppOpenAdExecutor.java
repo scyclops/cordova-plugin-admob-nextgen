@@ -187,10 +187,6 @@ public class AppOpenAdExecutor {
                     errData.put("message", error.getMessage());
                     fireEvent("on.appopen.failed.show", errData);
                 } catch (JSONException e) {}
-
-                if (currentAdUnitId != null) {
-                    loadAdInternal(currentAdUnitId, null);
-                }
             }
 
             @Override

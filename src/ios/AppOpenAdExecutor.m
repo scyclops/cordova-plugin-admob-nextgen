@@ -191,10 +191,6 @@
     self.appOpenAd = nil;
     self.isShowingAd = NO;
     [self.plugin fireEvent:@"document" event:@"on.appopen.dismissed" withData:nil];
-
-    if (self.currentAdUnitId) {
-        [self loadAdInternal:self.currentAdUnitId command:nil];
-    }
 }
 
 - (void)ad:(id<GADFullScreenPresentingAd>)ad didFailToPresentFullScreenContentWithError:(NSError *)error {
