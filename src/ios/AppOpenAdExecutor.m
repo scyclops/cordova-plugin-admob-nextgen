@@ -146,10 +146,6 @@
     if (![self isAdAvailable]) {
         NSString *jsonStr = @"{\"message\":\"Ad not ready or expired\"}";
         [self.plugin fireEvent:@"document" event:@"on.appopen.failed.show" withData:jsonStr];
-
-        if (self.currentAdUnitId) {
-            [self loadAdInternal:self.currentAdUnitId command:nil];
-        }
         return;
     }
 
@@ -199,10 +195,6 @@
 
     NSString *jsonStr = [NSString stringWithFormat:@"{\"code\":%ld, \"message\":\"%@\"}", (long)error.code, error.localizedDescription];
     [self.plugin fireEvent:@"document" event:@"on.appopen.failed.show" withData:jsonStr];
-
-    if (self.currentAdUnitId) {
-        [self loadAdInternal:self.currentAdUnitId command:nil];
-    }
 }
 
 @end

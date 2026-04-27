@@ -171,10 +171,6 @@ public class AppOpenAdExecutor {
                 appOpenAd = null;
                 isShowingAd = false;
                 fireEvent("on.appopen.dismissed", null);
-
-                if (currentAdUnitId != null) {
-                    loadAdInternal(currentAdUnitId, null);
-                }
             }
 
             @Override
