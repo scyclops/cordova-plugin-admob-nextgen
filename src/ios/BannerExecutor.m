@@ -33,6 +33,7 @@
         self.plugin = plugin;
         self.lastAdUnitId = @"";
         self.lastSizeStr = @"";
+
         self.currentPosition = @"bottom";
         self.lastPosition = @"bottom";
 
@@ -56,6 +57,29 @@
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+#pragma mark - Smart Window Helper (Diadopsi dari EmiBanner)
+
+- (UIWindow *)getKeyWindow {
+    UIWindow *window = nil;
+    if (@available(iOS 13.0, *)) {
+        for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
+            if (windowScene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in windowScene.windows) {
+                    if (w.isKeyWindow) { window = w; break; }
+                }
+            }
+            if (window) break;
+        }
+    }
+    if (!window) {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        window = [UIApplication sharedApplication].keyWindow;
+        #pragma clang diagnostic pop
+    }
+    return window;
 }
 
 #pragma mark - Main Methods
@@ -96,7 +120,6 @@
 
         if (self.bannerView != nil && isSameId && isSameSize) {
             if (self.isAutoShow) {
-
                 [self showBannerInternal];
                 CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Banner Updated (Cached)"];
                 [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
@@ -179,84 +202,63 @@
     return GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(frame.size.width);
 }
 
-#pragma mark - NATIVE FRAME MANIPULATION (THE DEFINITIVE WAY)
-
 - (void)layoutViews {
     dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *rootVC = self.plugin.viewController;
         UIView *webView = self.plugin.webView;
-        UIView *superView = webView.superview;
+        if (!rootVC || !webView) return;
 
-        if (!webView || !superView) return;
+        UIWindow *window = [self getKeyWindow];
+        UIEdgeInsets safeArea = (window) ? window.safeAreaInsets : UIEdgeInsetsZero;
 
-        CGRect superBounds = superView.bounds;
-        CGRect webFrame = superBounds;
+        CGFloat screenH = UIScreen.mainScreen.bounds.size.height;
+        CGFloat screenW = UIScreen.mainScreen.bounds.size.width;
 
-        if (self.bannerView && self.activeBannerHeight > 0) {
+        if (safeArea.bottom == 0 && screenH >= 812.0) safeArea.bottom = 34.0;
+        if (safeArea.top == 0 && screenH >= 812.0) safeArea.top = 44.0;
 
-            CGFloat safeTop = 0;
-            if (@available(iOS 11.0, *)) {
+        rootVC.view.backgroundColor = [UIColor blackColor];
+        webView.superview.backgroundColor = [UIColor blackColor];
 
-                UIWindow *window = webView.window;
+        CGRect fullScreenRect = CGRectMake(0, 0, screenW, screenH);
 
-                if (!window) {
-                    if (@available(iOS 13.0, *)) {
-                        for (UIWindowScene *windowScene in [UIApplication sharedApplication].connectedScenes) {
-                            if (windowScene.activationState == UISceneActivationStateForegroundActive) {
-                                for (UIWindow *w in windowScene.windows) {
-                                    if (w.isKeyWindow) {
-                                        window = w;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (window) break;
-                        }
-                    }
-                }
+        if (self.isBannerVisible && self.bannerView && self.activeBannerHeight > 0) {
 
-                if (!window) {
-                    #pragma clang diagnostic push
-                    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-                    window = UIApplication.sharedApplication.keyWindow;
-                    #pragma clang diagnostic pop
-                }
+            CGSize adSize = self.bannerView.intrinsicContentSize;
+            CGFloat bH = adSize.height > 0 ? adSize.height : self.activeBannerHeight;
+            CGFloat bW = adSize.width > 0 ? adSize.width : self.bannerView.bounds.size.width;
+            CGFloat bX = (screenW - bW) / 2.0;
+            CGFloat bY = 0;
 
-                if (window) {
-                    safeTop = window.safeAreaInsets.top;
-                }
-            }
-
-            CGRect bannerFrame = CGRectMake(0, 0, superBounds.size.width, self.activeBannerHeight);
             if ([self.currentPosition isEqualToString:@"top"]) {
-
-                bannerFrame.origin.y = self.isOverlapping ? 0 : safeTop;
+                bY = safeArea.top;
             } else {
-
-                bannerFrame.origin.y = superBounds.size.height - self.activeBannerHeight;
+                bY = screenH - safeArea.bottom - bH;
             }
-            self.bannerView.frame = bannerFrame;
 
-            self.bannerView.hidden = !self.isBannerVisible;
+            self.bannerView.frame = CGRectMake(bX, bY, bW, bH);
+            self.bannerView.hidden = NO;
 
-            if (self.isBannerVisible && !self.isOverlapping) {
+            if (!self.isOverlapping) {
+                CGRect newWebFrame = fullScreenRect;
                 if ([self.currentPosition isEqualToString:@"top"]) {
-
-                    webFrame.origin.y = bannerFrame.origin.y + self.activeBannerHeight;
-                    webFrame.size.height = superBounds.size.height - webFrame.origin.y;
+                    newWebFrame.origin.y = bY + bH;
+                    newWebFrame.size.height = screenH - newWebFrame.origin.y;
                 } else {
-
-                    webFrame.origin.y = 0;
-                    webFrame.size.height = bannerFrame.origin.y;
+                    newWebFrame.origin.y = 0;
+                    newWebFrame.size.height = bY;
                 }
+                webView.frame = newWebFrame;
+            } else {
+                webView.frame = fullScreenRect;
             }
         } else {
             if (self.bannerView) self.bannerView.hidden = YES;
+            webView.frame = fullScreenRect;
         }
 
-        webView.frame = webFrame;
-
-        if (self.bannerView) {
-            [superView bringSubviewToFront:self.bannerView];
+        if (self.bannerView && self.isBannerVisible) {
+            [webView.superview bringSubviewToFront:self.bannerView];
         }
     });
 }
@@ -266,14 +268,14 @@
 - (void)showBannerInternal {
     if (self.bannerView) {
         self.isBannerVisible = YES;
-        [self layoutViews]; 
+        [self layoutViews];
     }
 }
 
 - (void)hideBannerInternal {
     if (self.bannerView) {
         self.isBannerVisible = NO;
-        [self layoutViews]; 
+        [self layoutViews];
     }
 }
 
@@ -282,7 +284,7 @@
         self.isBannerVisible = NO;
         self.activeBannerHeight = 0;
 
-        [self layoutViews]; 
+        [self layoutViews];
 
         [self.bannerView removeFromSuperview];
         self.bannerView.delegate = nil;
