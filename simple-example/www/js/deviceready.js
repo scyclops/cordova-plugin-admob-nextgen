@@ -110,7 +110,8 @@ document.addEventListener("deviceready", function () {
         admobNextGen.initialize({
             maxAdContentRating: 'G',        // 'G' || 'PG' || 'T' || 'MA' || ""
             tagForChildDirectedTreatment: false,
-            tagForUnderAgeOfConsent: false
+            tagForUnderAgeOfConsent: false,
+           // isNativeValidatorDisabled: false // optional param for: cordova-plugin-admob-nextgen-native
         }, function () {
             console.log(">>> AdMob SDK Initialized & Ready <<<");
             if (window.logToScreen) window.logToScreen("✅ SDK READY TO SERVE ADS", "success");

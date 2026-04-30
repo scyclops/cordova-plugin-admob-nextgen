@@ -40,6 +40,8 @@ public class AdMobNextGen extends CordovaPlugin {
 
     private BannerPreloadExecutor bannerPreloadExecutor;
 
+    private boolean isNativeValidatorDisabled = true;
+
     @Override
     public void pluginInitialize() {
         super.pluginInitialize();
@@ -204,38 +206,45 @@ public class AdMobNextGen extends CordovaPlugin {
     }
 
     private void initializeSDK(JSONArray args, CallbackContext callbackContext) {
-        String appId = getAppIdFromManifest();
-        if (appId == null) {
-            callbackContext.error("AdMob App ID missing");
-            return;
-        }
-
-        cordova.getThreadPool().execute(() -> {
-            try {
-                InitializationConfig.Builder initConfigBuilder = new InitializationConfig.Builder(appId);
-
-                JSONObject configJson = args.optJSONObject(0);
-
-                if (configJson != null) {
-
-                    RequestConfiguration requestConfig = GlobalSettingsExecutor.buildRequestConfiguration(configJson);
-                    initConfigBuilder.setRequestConfiguration(requestConfig);
-                }
-
-                InitializationConfig config = initConfigBuilder.build();
-
-                MobileAds.initialize(
-                        cordova.getActivity(),
-                        config,
-                        initializationStatus -> {
-                            cordova.getActivity().runOnUiThread(() -> callbackContext.success("Initialized"));
-                        }
-                );
-            } catch (Exception e) {
-                cordova.getActivity().runOnUiThread(() -> callbackContext.error(e.getMessage()));
-            }
-        });
+    String appId = getAppIdFromManifest();
+    if (appId == null) {
+        callbackContext.error("AdMob App ID missing");
+        return;
     }
+
+    cordova.getThreadPool().execute(() -> {
+        try {
+            InitializationConfig.Builder initConfigBuilder = new InitializationConfig.Builder(appId);
+
+            JSONObject configJson = args.optJSONObject(0);
+
+            if (configJson != null) {
+                RequestConfiguration requestConfig = GlobalSettingsExecutor.buildRequestConfiguration(configJson);
+                initConfigBuilder.setRequestConfiguration(requestConfig);
+
+                this.isNativeValidatorDisabled = configJson.optBoolean("isNativeValidatorDisabled", true);
+            } else {
+                this.isNativeValidatorDisabled = false;
+            }
+
+            if (this.isNativeValidatorDisabled) {
+                initConfigBuilder.setNativeValidatorDisabled();
+            }
+
+            InitializationConfig config = initConfigBuilder.build();
+
+            MobileAds.initialize(
+                    cordova.getActivity(),
+                    config,
+                    initializationStatus -> {
+                        cordova.getActivity().runOnUiThread(() -> callbackContext.success("Initialized"));
+                    }
+            );
+        } catch (Exception e) {
+            cordova.getActivity().runOnUiThread(() -> callbackContext.error(e.getMessage()));
+        }
+    });
+}
 
     private String getAppIdFromManifest() {
         try {

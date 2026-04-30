@@ -86,8 +86,14 @@ Add this to your `config.xml` to restore the plugin automatically.
         <variable name="APP_ID_IOS" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
     </plugin>
 
+---
 
-## Supporting Mediation: **[⚡ admob-mediation-suite ](https://github.com/swaplab-engine/admob-mediation-suite)** (Optional)
+## (Optional)
+
+### Supporting Mediation: **[⚡ admob-mediation-suite ](https://github.com/swaplab-engine/admob-mediation-suite)** (Optional)
+### Supporting Native ads: **[⚡ cordova-plugin-admob-nextgen-native ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-native)** (Optional)
+
+---
 
 ## For Capacitor users
 **[⚡ Capacitor Integration: Automated Setup for AdMob Next Gen ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/3)**.
@@ -141,9 +147,10 @@ Add this to your `config.xml` to restore the plugin automatically.
     // 3. Initialize the SDK
     function startSdk() {
         admobNextGen.initialize({
-            maxAdContentRating: 'G',  // 'G' || 'PG' || 'T' || 'MA' || ""
-            tagForChildDirectedTreatment: false,
-            tagForUnderAgeOfConsent: false
+            maxAdContentRating: 'G',  // 'G' | 'PG' | 'T' | 'MA' | ""
+            tagForChildDirectedTreatment: false, // true | false | null
+            tagForUnderAgeOfConsent: false, // true | false | null
+            // isNativeValidatorDisabled: false // optional param for: cordova-plugin-admob-nextgen-native
         }, function() {
             console.log(">>> AdMob SDK Initialized & Ready <<<");
         }, function(err) {
@@ -247,10 +254,12 @@ Supports **Adaptive**, **Standard**, and **Collapsible** banners.
 
 ## 4. Native Ads (Advanced Overlay) - Android Only
 
+- Recommended: **[⚡ cordova-plugin-admob-nextgen-native ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-native)** (Android | IOS)
+
 High-performance native templates.
 
 ### Example A: Using Templates (Recommended)
-
+    // Android Only
     admobNextGen.createNativeAd({
         adUnitId: 'ca-app-pub-xxx/xxx',
         view: 'banner_bottom',    // Presets: 'banner_top', 'banner_bottom', 'modal_center'
@@ -259,7 +268,7 @@ High-performance native templates.
     });
 
 ### Example B: Custom Position (Manual Coordinates)
-
+    // Android Only
     admobNextGen.createNativeAd({
         adUnitId: 'ca-app-pub-xxx/xxx',
         view: 'custom',
@@ -271,7 +280,7 @@ High-performance native templates.
     });
 
 ### Native Methods & Events
-
+    // Android Only
     admobNextGen.removeNativeAd();
 
     document.addEventListener('on.native.loaded', () => console.log("Native Loaded"));
