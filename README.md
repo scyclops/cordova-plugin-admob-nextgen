@@ -71,6 +71,10 @@ We prioritize the safety of your AdMob account and the stability of your app.
 
 ## Cordova/Capacitor/Framework7 AdMob Next-Gen: Installation & Usage Guide
 
+---
+> Fastest test (APK Debug): **[⚡ With github action ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/4)** (Optional)
+---
+
 ## 1. Cordova or Framework7
 
 ### Option A: Via CLI
@@ -98,7 +102,7 @@ Add this to your `config.xml` to restore the plugin automatically.
 ## For Capacitor users
 **[⚡ Capacitor Integration: Automated Setup for AdMob Next Gen ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/3)**.
 
-**[⚡ AdMob Next Gen - Starter Templates 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-template)**.
+**[⚡ AdMob Next Gen - Starter Capacitor Templates 🚀 ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-template)**.
 
 ---
 
