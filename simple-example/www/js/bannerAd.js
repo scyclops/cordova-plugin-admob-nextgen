@@ -15,6 +15,13 @@ function createBannerAds() {
     }
 }
 
+/* fastest, banner ads will appear very quickly.
+https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main#5-ad-preloading-banner---android-only
+admobNextGen.startBannerPreload({config})
+admobNextGen.showPreloadedBanner()
+admobNextGen.stopBannerPreload()
+*/
+
 function showBannerAds() {
     if (isDeviceready) {
         if (window.logToScreen) window.logToScreen("Showing Banner Ad...");

@@ -39,6 +39,7 @@ public class AdMobNextGen extends CordovaPlugin {
     private NativeExecutor nativeExecutor;
 
     private BannerPreloadExecutor bannerPreloadExecutor;
+    private AppOpenAdPreloadExecutor appOpenAdPreloadExecutor;
 
     private boolean isNativeValidatorDisabled = true;
 
@@ -60,6 +61,7 @@ public class AdMobNextGen extends CordovaPlugin {
         nativeExecutor = new NativeExecutor(cordova, webView);
 
         bannerPreloadExecutor = new BannerPreloadExecutor(cordova, webView);
+        appOpenAdPreloadExecutor = new AppOpenAdPreloadExecutor(cordova, webView);
     }
 
     @Override
@@ -133,6 +135,19 @@ public class AdMobNextGen extends CordovaPlugin {
             return true;
         }
 
+        if ("startAppOpenPreload".equals(action)) {
+            appOpenAdPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+        if ("showPreloadedAppOpenAd".equals(action)) {
+            appOpenAdPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+        if ("isAppOpenAdAvailable".equals(action)) {
+            appOpenAdPreloadExecutor.checkAdAvailable(args, callbackContext);
+            return true;
+        }
+
         if ("loadAppOpenAd".equals(action)) {
             if (appOpenAdExecutor != null) {
                 appOpenAdExecutor.loadAd(args, callbackContext);
@@ -202,6 +217,11 @@ public class AdMobNextGen extends CordovaPlugin {
         super.onResume(multitasking);
         if (appOpenAdExecutor != null && appOpenAdExecutor.shouldAutoShow()) {
             appOpenAdExecutor.showAdIfAvailable(cordova.getActivity());
+        }
+        if (appOpenAdPreloadExecutor != null && appOpenAdPreloadExecutor.shouldAutoShow()) {
+            if (appOpenAdPreloadExecutor.hasAvailableAd()) {
+                appOpenAdPreloadExecutor.showPolledAd(null, null);
+            }
         }
     }
 

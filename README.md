@@ -365,6 +365,9 @@ Supports Auto-Resume logic.
 
     admobNextGen.showAppOpenAd();
 
+### With App Open Ad Preload
+> App Open Ad Preload **[⚡ Modern ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main/simple-example/www/js/AppOpenAdPreload.js)** 
+
 ### App Open Events
 
     document.addEventListener('on.appopen.revenue', (data) => console.log(data));

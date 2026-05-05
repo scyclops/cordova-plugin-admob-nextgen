@@ -120,6 +120,18 @@ var AdMobNextGen = {
 
     stopBannerPreload: function (success, error) {
         exec(success, error, 'AdMobNextGen', 'stopBannerPreload', []);
+    },
+
+    startAppOpenPreload: function (options, success, error) {
+        exec(success, error, 'AdMobNextGen', 'startAppOpenPreload', [options]);
+    },
+
+    showPreloadedAppOpenAd: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'showPreloadedAppOpenAd', []);
+    },
+
+    isAppOpenAdAvailable: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'isAppOpenAdAvailable', []);
     }
 };
 
