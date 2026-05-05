@@ -11,8 +11,8 @@ function startAppOpenPreloadAd() {
         if (window.logToScreen) window.logToScreen("Loading App Open Ad Preload...");
         admobNextGen.startAppOpenPreload({
             adUnitId: App_Open_ID,
-            isAutoShow: true, // opsional: Automatically show when app resumes from background
-            retryInterval: 5000 // opsional: anti spam, contoh kesalahn logoka app.js method terpanggial dalam loop/akun admob beresiko
+            isAutoShow: false, // optional: Automatically show when app resumes from background
+            retryInterval: 5000 // optional: anti spam
         });
     }
 }
