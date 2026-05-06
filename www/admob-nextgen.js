@@ -55,6 +55,11 @@ var AdMobNextGen = {
     },
 
     createBanner: function (options, success, error) {
+        var isCapacitorEnvironment = typeof window.Capacitor !== 'undefined';
+        
+        options = options || {};
+        options.isCapacitor = isCapacitorEnvironment;
+
         exec(success, error, 'AdMobNextGen', 'createBanner', [options]);
     },
 
@@ -111,6 +116,11 @@ var AdMobNextGen = {
     },
 
     startBannerPreload: function (options, success, error) {
+        var isCapacitorEnvironment = typeof window.Capacitor !== 'undefined';
+        
+        options = options || {};
+        options.isCapacitor = isCapacitorEnvironment;
+
         exec(success, error, 'AdMobNextGen', 'startBannerPreload', [options]);
     },
 
