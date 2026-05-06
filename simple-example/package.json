@@ -1,7 +1,7 @@
 {
   "name": "org.apache.cordova.hellocordova",
   "displayName": "Hello Cordova",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A sample Apache Cordova application that responds to the deviceready event.",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Apache Cordova Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "cordova-android": "^14.0.1",
+    "cordova-android": "^15.0.0",
     "cordova-plugin-admob-nextgen": "github:swaplab-engine/cordova-plugin-admob-nextgen"
   },
   "cordova": {

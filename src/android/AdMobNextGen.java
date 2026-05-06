@@ -129,6 +129,11 @@ public class AdMobNextGen extends CordovaPlugin {
             return true;
         }
 
+        if ("hideBannerPreload".equals(action)) {
+            bannerPreloadExecutor.hideBanner(callbackContext);
+            return true;
+        }
+
         if ("removeBanner".equals(action)) {
             bannerExecutor.destroy();
             callbackContext.success();

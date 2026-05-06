@@ -19,7 +19,8 @@ function createBannerAds() {
 https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main#5-ad-preloading-banner---android-only
 admobNextGen.startBannerPreload({config})
 admobNextGen.showPreloadedBanner()
-admobNextGen.stopBannerPreload()
+admobNextGen.hideBannerPreload() // hide
+admobNextGen.stopBannerPreload() // remove
 */
 
 function showBannerAds() {

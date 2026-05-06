@@ -128,6 +128,10 @@ var AdMobNextGen = {
         exec(success, error, 'AdMobNextGen', 'showPreloadedBanner', []);
     },
 
+    hideBannerPreload: function (success, error) {
+            exec(success, error, 'AdMobNextGen', 'hideBannerPreload', []);
+    },
+
     stopBannerPreload: function (success, error) {
         exec(success, error, 'AdMobNextGen', 'stopBannerPreload', []);
     },

@@ -320,8 +320,11 @@ Use the background engine to pool ads for 0ms latency.
     // 2. Show Instantly (from pool)
     admobNextGen.showPreloadedBanner();
 
-    // 3. Stop Engine
+    // 3. Stop/Remove Engine
     admobNextGen.stopBannerPreload();
+
+    // 4. Hide Engine
+    admobNextGen.hideBannerPreload() 
 
 
     ### Banner Events
