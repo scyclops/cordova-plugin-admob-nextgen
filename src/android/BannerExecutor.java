@@ -58,6 +58,7 @@ public class BannerExecutor {
     private boolean isAutoShow = true;
     private boolean isCollapsible = false;
     private boolean isCapacitor = false;
+    private boolean isCordova15 = false; 
 
     private int lastAdHeight = 0;
 
@@ -94,6 +95,8 @@ public class BannerExecutor {
 
             if (options.has("isCapacitor")) this.isCapacitor = options.getBoolean("isCapacitor");
             else this.isCapacitor = false;
+
+            if (options.has("isCordova15")) this.isCordova15 = options.getBoolean("isCordova15"); 
 
             final String finalSizeStr = requestedSize;
             final String finalNewPosition = newPosition;
@@ -426,37 +429,69 @@ public class BannerExecutor {
             } else {
                 adView.setLayoutParams(bannerParams);
             }
+            if (isCordova15) {
 
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-                adLayout.setOnApplyWindowInsetsListener((v, insets) -> {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    adLayout.setOnApplyWindowInsetsListener((v, insets) -> {
 
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                        android.graphics.Insets sysInsets = insets.getInsets(android.view.WindowInsets.Type.systemBars());
-                        systemSafeTop = sysInsets.top;
-                        systemSafeBottom = sysInsets.bottom;
-                    } else {
-                        systemSafeTop = insets.getSystemWindowInsetTop();
-                        systemSafeBottom = insets.getSystemWindowInsetBottom();
-                    }
-
-                    if (adView != null && adView.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
-                        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) adView.getLayoutParams();
-                        if ("top".equalsIgnoreCase(currentPosition)) {
-                            params.topMargin = systemSafeTop;
-                            params.bottomMargin = 0;
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            android.graphics.Insets sysInsets = insets.getInsets(android.view.WindowInsets.Type.systemBars());
+                            systemSafeTop = sysInsets.top;
+                            systemSafeBottom = sysInsets.bottom;
                         } else {
-                            params.bottomMargin = systemSafeBottom;
-                            params.topMargin = 0;
+                            systemSafeTop = insets.getSystemWindowInsetTop();
+                            systemSafeBottom = insets.getSystemWindowInsetBottom();
                         }
-                        adView.setLayoutParams(params);
-                    }
 
-                    updateWebViewMargins();
+                        if (isCordova15) {
 
-                    return insets;
-                });
-                adLayout.requestApplyInsets();
-            }
+                            if ("top".equalsIgnoreCase(currentPosition)) {
+                                adLayout.setPadding(0, systemSafeTop, 0, 0);
+                            } else {
+                                adLayout.setPadding(0, 0, 0, systemSafeBottom);
+                            }
+
+                        }
+                        updateWebViewMargins();
+
+                        return insets;
+                    });
+                    adLayout.requestApplyInsets();
+                }
+
+            } else {
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    adLayout.setOnApplyWindowInsetsListener((v, insets) -> {
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                            android.graphics.Insets sysInsets = insets.getInsets(android.view.WindowInsets.Type.systemBars());
+                            systemSafeTop = sysInsets.top;
+                            systemSafeBottom = sysInsets.bottom;
+                        } else {
+                            systemSafeTop = insets.getSystemWindowInsetTop();
+                            systemSafeBottom = insets.getSystemWindowInsetBottom();
+                        }
+
+                        if (adView != null && adView.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+                            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) adView.getLayoutParams();
+                            if ("top".equalsIgnoreCase(currentPosition)) {
+                                params.topMargin = systemSafeTop;
+                                params.bottomMargin = 0;
+                            } else {
+                                params.bottomMargin = systemSafeBottom;
+                                params.topMargin = 0;
+                            }
+                            adView.setLayoutParams(params);
+                        }
+
+                        updateWebViewMargins();
+
+                        return insets;
+                    });
+                    adLayout.requestApplyInsets();
+                }
+             } 
         }
     }
 

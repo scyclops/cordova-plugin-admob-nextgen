@@ -56,9 +56,16 @@ var AdMobNextGen = {
 
     createBanner: function (options, success, error) {
         var isCapacitorEnvironment = typeof window.Capacitor !== 'undefined';
-        
+        var isCordova15Environment = false;
+        if (!isCapacitorEnvironment && typeof cordova !== 'undefined' && cordova.platformVersion) {
+            var majorVersion = parseInt(cordova.platformVersion.split('.')[0], 10);
+            if (majorVersion >= 15) {
+                isCordova15Environment = true;
+            }
+        }
         options = options || {};
         options.isCapacitor = isCapacitorEnvironment;
+        options.isCordova15 = isCordova15Environment;
 
         exec(success, error, 'AdMobNextGen', 'createBanner', [options]);
     },
