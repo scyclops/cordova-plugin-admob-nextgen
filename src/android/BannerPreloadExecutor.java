@@ -596,6 +596,16 @@ public class BannerPreloadExecutor {
         else if ("MEDIUM_RECTANGLE".equalsIgnoreCase(sizeStr)) return AdSize.MEDIUM_RECTANGLE;
         else if ("FULL_BANNER".equalsIgnoreCase(sizeStr)) return AdSize.FULL_BANNER;
         else if ("LEADERBOARD".equalsIgnoreCase(sizeStr)) return AdSize.LEADERBOARD;
+        else if ("LARGE_LANDSCAPE_ANCHORED_ADAPTIVE".equalsIgnoreCase(sizeStr))
+            return AdSize.getLargeLandscapeAnchoredAdaptiveBannerAdSize(context, getAdWidth());
+        else if ("LARGE_PORTRAIT_ANCHORED_ADAPTIVE".equalsIgnoreCase(sizeStr))
+            return AdSize.getLargePortraitAnchoredAdaptiveBannerAdSize(context, getAdWidth());
+        else if ("CURRENT_ORIENTATION_INLINE_ADAPTIVE".equalsIgnoreCase(sizeStr))
+            return AdSize.getCurrentOrientationInlineAdaptiveBannerAdSize(context, getAdWidth());
+        else if ("LARGE_ANCHORED_ADAPTIVE".equalsIgnoreCase(sizeStr))
+            return AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, getAdWidth());
+        else if ("PORTRAIT_INLINE_ADAPTIVE".equalsIgnoreCase(sizeStr))
+            return AdSize.getPortraitInlineAdaptiveBannerAdSize(context, getAdWidth());
         else return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, getAdWidth());
     }
 
