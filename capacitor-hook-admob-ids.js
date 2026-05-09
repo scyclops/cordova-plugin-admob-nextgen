@@ -104,7 +104,7 @@ function updateIosInfoPlist(appIdIos) {
     setStringKey('NSUserTrackingUsageDescription', 'This identifier will be used to deliver personalized ads to you.');
     
     setBoolKey('GADDelayAppMeasurementInit', true);
-
+    // https://developers.google.com/admob/ios/quick-start
     if (!content.includes('<key>SKAdNetworkItems</key>')) {
         const skAdNetworks = [
             'cstr6suwn9.skadnetwork', '4fzdc2evr5.skadnetwork', '2fnua5tdw4.skadnetwork', 'ydx93a7ass.skadnetwork',
@@ -158,7 +158,7 @@ function run() {
             admob = {
                 APP_ID_ANDROID: appIdAndroid ? appIdAndroid[1] : "ca-app-pub-3940256099942544~3347511713",
                 APP_ID_IOS: appIdIos ? appIdIos[1] : "ca-app-pub-3940256099942544~1458002511",
-                NEXT_GEN_SDK_VERSION: sdk ? sdk[1] : "1.0.0",
+                NEXT_GEN_SDK_VERSION: sdk ? sdk[1] : "1.0.1",
                 UMP_VERSION: ump ? ump[1] : "4.0.0"
             };
         }
@@ -167,7 +167,7 @@ function run() {
         injectExclusionRules();
         if (admob?.NEXT_GEN_SDK_VERSION || admob?.UMP_VERSION) {
             updateGradleDependencies(
-                admob.NEXT_GEN_SDK_VERSION || "1.0.0",
+                admob.NEXT_GEN_SDK_VERSION || "1.0.1",
                 admob.UMP_VERSION || "4.0.0"
             );
         }

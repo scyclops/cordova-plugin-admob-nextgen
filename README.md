@@ -75,6 +75,12 @@ We prioritize the safety of your AdMob account and the stability of your app.
 > Fastest test (APK Debug): **[⚡ With github action ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/4)** (Optional)
 ---
 
+### 🎉 View all plugin release notes
+- 👉 [**Releases**](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/releases)
+
+---
+
+
 ## 1. Cordova or Framework7
 
 ### Option A: Via CLI
