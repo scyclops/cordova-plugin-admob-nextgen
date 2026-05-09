@@ -1,5 +1,14 @@
 // js/bannerAd.js
 
+// new large banner adaptive min plugin version: 1.2+
+/*
+LARGE_LANDSCAPE_ANCHORED_ADAPTIVE
+LARGE_PORTRAIT_ANCHORED_ADAPTIVE
+CURRENT_ORIENTATION_INLINE_ADAPTIVE
+LARGE_ANCHORED_ADAPTIVE
+PORTRAIT_INLINE_ADAPTIVE
+*/
+
 function createBannerAds() {
     if (isDeviceready) {
         if (window.logToScreen) window.logToScreen("Creating Banner Ad...");

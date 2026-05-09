@@ -228,6 +228,17 @@ Supports **Adaptive**, **Standard**, and **Collapsible** banners.
         isAutoShow: true
     });
 
+### New large banner adaptive size
+
+>  new banner size min plugin version: 1.2+
+
+- LARGE_LANDSCAPE_ANCHORED_ADAPTIVE
+- LARGE_PORTRAIT_ANCHORED_ADAPTIVE
+- CURRENT_ORIENTATION_INLINE_ADAPTIVE
+- LARGE_ANCHORED_ADAPTIVE
+- PORTRAIT_INLINE_ADAPTIVE
+
+
 ### Banner Methods
 
     admobNextGen.showBanner();
