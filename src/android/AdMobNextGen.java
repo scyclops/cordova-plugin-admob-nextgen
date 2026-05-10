@@ -283,7 +283,12 @@ public class AdMobNextGen extends CordovaPlugin {
 
     @Override
     public void onDestroy() {
-        if (bannerExecutor != null) bannerExecutor.destroy();
+        if (bannerExecutor != null){ 
+            bannerExecutor.destroy();
+        }
+        if (nativeExecutor != null) {
+            nativeExecutor.destroy();
+        }
         super.onDestroy();
     }
 

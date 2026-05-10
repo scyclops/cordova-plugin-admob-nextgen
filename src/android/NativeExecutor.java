@@ -51,12 +51,18 @@ public class NativeExecutor {
     private NativeAd mNativeAd;
 
     private boolean isOverlapping = true;
+    private boolean isCapacitor = false;
+    private boolean isCordova15 = false;
     private String currentPreset = "";
     private int currentAdHeightPixels = 0;
 
     private boolean isLoading = false; 
     private long lastLoadTime = 0;     
     private long minLoadInterval = 5000; 
+    private boolean isNativeVisible = false;
+
+    private int systemSafeTop = 0;
+    private int systemSafeBottom = 0;
 
     public NativeExecutor(CordovaInterface cordova, CordovaWebView webView) {
         this.cordova = cordova;
@@ -89,6 +95,10 @@ public class NativeExecutor {
             String viewMode = options.optString("view", "custom");
             this.currentPreset = viewMode;
             this.isOverlapping = options.optBoolean("isOverlapping", true);
+            this.isCapacitor = options.optBoolean("isCapacitor", false);
+            if (options.has("isCordova15")) {
+                this.isCordova15 = options.getBoolean("isCordova15");
+            }
 
             DisplayMetrics metrics = cordova.getActivity().getResources().getDisplayMetrics();
             float density = metrics.density;
@@ -158,14 +168,78 @@ public class NativeExecutor {
             public void onNativeAdLoaded(@NonNull NativeAd nativeAd) {
 
                 cordova.getActivity().runOnUiThread(() -> {
-
                     isLoading = false;
 
-                    removeNativeAd();
+                    NativeAdView pendingView = buildNativeAdView(nativeAd, x, y, w, h);
+
+                    if (adContainer == null) {
+                        adContainer = new RelativeLayout(cordova.getActivity());
+                        ViewGroup.LayoutParams containerParams = new ViewGroup.LayoutParams(
+                                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                        cordova.getActivity().addContentView(adContainer, containerParams);
+
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                            adContainer.setOnApplyWindowInsetsListener((v, insets) -> {
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                                    android.graphics.Insets sysInsets = insets.getInsets(android.view.WindowInsets.Type.systemBars());
+                                    systemSafeTop = sysInsets.top;
+                                    systemSafeBottom = sysInsets.bottom;
+                                } else {
+                                    systemSafeTop = insets.getSystemWindowInsetTop();
+                                    systemSafeBottom = insets.getSystemWindowInsetBottom();
+                                }
+
+                                if (isCordova15) {
+
+                                    if ("banner_top".equalsIgnoreCase(currentPreset)) {
+                                        adContainer.setPadding(0, systemSafeTop, 0, 0);
+                                    } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+                                        adContainer.setPadding(0, 0, 0, systemSafeBottom);
+                                    } else {
+                                        adContainer.setPadding(0, 0, 0, 0);
+                                    }
+                                } else {
+
+                                    if (nativeAdView != null && nativeAdView.getLayoutParams() instanceof RelativeLayout.LayoutParams) {
+                                        RelativeLayout.LayoutParams viewParams = (RelativeLayout.LayoutParams) nativeAdView.getLayoutParams();
+                                        if ("banner_top".equalsIgnoreCase(currentPreset)) {
+                                            viewParams.topMargin = systemSafeTop;
+                                            viewParams.bottomMargin = 0;
+                                        } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+                                            viewParams.bottomMargin = systemSafeBottom;
+                                            viewParams.topMargin = 0;
+                                        }
+                                        nativeAdView.setLayoutParams(viewParams);
+                                    }
+                                }
+
+                                updateWebViewMargins();
+                                return insets;
+                            });
+                            adContainer.requestApplyInsets();
+                        }
+                    }
+
+                    RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams) pendingView.getLayoutParams();
+
+                    adContainer.addView(pendingView, layoutParams);
+                    adContainer.bringToFront();
+
+                    if (nativeAdView != null) {
+                        adContainer.removeView(nativeAdView);
+                        nativeAdView.destroy();
+                    }
+                    if (mNativeAd != null && mNativeAd != nativeAd) {
+                        mNativeAd.destroy();
+                    }
+
+                    nativeAdView = pendingView;
                     mNativeAd = nativeAd;
 
+                    isNativeVisible = true;
+
                     setupEventCallback(nativeAd);
-                    showNativeAdView(nativeAd, x, y, w, h);
+                    updateWebViewMargins();
 
                     fireEvent("on.native.loaded", null);
                     callbackContext.success("Native Ad Shown");
@@ -183,7 +257,7 @@ public class NativeExecutor {
                         err.put("code", loadAdError.getCode());
                         err.put("message", loadAdError.getMessage());
                         fireEvent("on.native.failed", err);
-                    } catch (JSONException e) {}
+                    } catch (JSONException ignored) {}
                     callbackContext.error(loadAdError.getMessage());
                 });
             }
@@ -192,48 +266,7 @@ public class NativeExecutor {
         NativeAdLoader.load(request, loaderCallback);
     }
 
-    private void setupEventCallback(NativeAd nativeAd) {
-        nativeAd.setAdEventCallback(new NativeAdEventCallback() {
-            @Override
-            public void onAdShowedFullScreenContent() {
-                fireEvent("on.native.shown", null);
-            }
-            @Override
-            public void onAdDismissedFullScreenContent() {
-                fireEvent("on.native.dismissed", null);
-            }
-            @Override
-            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError error) {
-
-                try {
-                    JSONObject errData = new JSONObject();
-                    errData.put("message", error.getMessage());
-                    fireEvent("on.native.show.failed", errData);
-                } catch (JSONException e) {}
-            }
-            @Override
-            public void onAdImpression() {
-                fireEvent("on.native.impression", null);
-            }
-            @Override
-            public void onAdClicked() {
-                fireEvent("on.native.clicked", null);
-            }
-            @Override
-            public void onAdPaid(@NonNull AdValue adValue) {
-                try {
-                    JSONObject data = new JSONObject();
-                    data.put("value", adValue.getValueMicros());
-                    data.put("currency", adValue.getCurrencyCode());
-                    data.put("precision", adValue.getPrecisionType());
-
-                    fireEvent("on.native.revenue", data);
-                } catch (JSONException e) {}
-            }
-        });
-    }
-
-    private void showNativeAdView(NativeAd nativeAd, int x, int y, int width, int height) {
+    private NativeAdView buildNativeAdView(NativeAd nativeAd, int x, int y, int width, int height) {
         float density = cordova.getActivity().getResources().getDisplayMetrics().density;
 
         int finalX = (int) (x * density);
@@ -245,11 +278,25 @@ public class NativeExecutor {
 
         boolean isSmallMode = (height < 150);
 
-        nativeAdView = new NativeAdView(cordova.getActivity());
+        NativeAdView newNativeAdView = new NativeAdView(cordova.getActivity());
 
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(finalW, finalH);
-        params.leftMargin = finalX;
-        params.topMargin = finalY;
+
+        if ("banner_top".equalsIgnoreCase(currentPreset)) {
+            params.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            params.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        } else if ("modal_center".equalsIgnoreCase(currentPreset)) {
+            params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        } else {
+
+            params.leftMargin = finalX;
+            params.topMargin = finalY;
+        }
+
+        newNativeAdView.setLayoutParams(params);
 
         LinearLayout mainLayout = new LinearLayout(cordova.getActivity());
         mainLayout.setOrientation(LinearLayout.VERTICAL);
@@ -325,44 +372,77 @@ public class NativeExecutor {
         }
         mainLayout.addView(ctaView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        nativeAdView.addView(mainLayout);
+        newNativeAdView.addView(mainLayout);
 
-        nativeAdView.setIconView(iconView);
-        nativeAdView.setHeadlineView(headlineView);
-        nativeAdView.setBodyView(bodyView);
-        nativeAdView.setCallToActionView(ctaView);
-        nativeAdView.registerNativeAd(nativeAd, mediaView);
+        newNativeAdView.setIconView(iconView);
+        newNativeAdView.setHeadlineView(headlineView);
+        newNativeAdView.setBodyView(bodyView);
+        newNativeAdView.setCallToActionView(ctaView);
+        newNativeAdView.registerNativeAd(nativeAd, mediaView);
 
-        MediaContent mediaContent = nativeAd.getMediaContent();
-        if (mediaContent != null && mediaContent.getHasVideoContent()) {
-            VideoController vc = mediaContent.getVideoController();
-        }
+        return newNativeAdView;
+    }
 
-        if (adContainer == null) {
-            adContainer = new RelativeLayout(cordova.getActivity());
-            ViewGroup.LayoutParams containerParams = new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-            cordova.getActivity().addContentView(adContainer, containerParams);
-        }
+    private void setupEventCallback(NativeAd nativeAd) {
+        nativeAd.setAdEventCallback(new NativeAdEventCallback() {
+            @Override
+            public void onAdShowedFullScreenContent() {
+                fireEvent("on.native.shown", null);
+            }
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                fireEvent("on.native.dismissed", null);
+            }
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.libraries.ads.mobile.sdk.common.FullScreenContentError error) {
 
-        adContainer.addView(nativeAdView, params);
-        adContainer.bringToFront();
+                try {
+                    JSONObject errData = new JSONObject();
+                    errData.put("message", error.getMessage());
+                    fireEvent("on.native.show.failed", errData);
+                } catch (JSONException e) {}
+            }
+            @Override
+            public void onAdImpression() {
+                fireEvent("on.native.impression", null);
+            }
+            @Override
+            public void onAdClicked() {
+                fireEvent("on.native.clicked", null);
+            }
+            @Override
+            public void onAdPaid(@NonNull AdValue adValue) {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("value", adValue.getValueMicros());
+                    data.put("currency", adValue.getCurrencyCode());
+                    data.put("precision", adValue.getPrecisionType());
 
-        updateWebViewMargins();
+                    fireEvent("on.native.revenue", data);
+                } catch (JSONException e) {}
+            }
+        });
     }
 
     public void removeNativeAd() {
         cordova.getActivity().runOnUiThread(() -> {
+
+            isNativeVisible = false;
+
             if (nativeAdView != null) {
                 nativeAdView.destroy();
                 if (adContainer != null) {
                     adContainer.removeView(nativeAdView);
                 }
                 nativeAdView = null;
-                mNativeAd = null;
-
-                resetWebViewMargins();
             }
+
+            if (mNativeAd != null) {
+                mNativeAd.destroy();
+                mNativeAd = null;
+            }
+
+            updateWebViewMargins();
         });
     }
 
@@ -375,14 +455,74 @@ public class NativeExecutor {
         if (lp instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
 
-            if (isOverlapping) {
-                params.setMargins(0, 0, 0, 0);
-            } else {
-                if ("banner_top".equalsIgnoreCase(currentPreset)) {
-                    params.setMargins(0, currentAdHeightPixels, 0, 0);
-                } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
-                    params.setMargins(0, 0, 0, currentAdHeightPixels);
+            if (isCapacitor) {
+
+                int screenHeightInPx = getScreenHeightInPx();
+
+                if (!isNativeVisible || isOverlapping) {
+                    params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                    params.topMargin = 0;
+                    params.bottomMargin = 0;
                 } else {
+                    if ("banner_top".equalsIgnoreCase(currentPreset)) {
+                        params.topMargin = currentAdHeightPixels;
+                        params.bottomMargin = 0;
+                        params.height = screenHeightInPx - currentAdHeightPixels;
+                    } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+                        int webViewHeight = screenHeightInPx - currentAdHeightPixels;
+                        params.height = webViewHeight;
+                        params.topMargin = 0;
+                    } else {
+
+                        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                        params.topMargin = 0;
+                        params.bottomMargin = 0;
+                    }
+                }
+
+                webViewView.setTranslationY(0);
+
+            } else if (isCordova15) {
+
+                webViewView.setTranslationY(0);
+
+                if (!isNativeVisible || isOverlapping) {
+
+                    params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
+                } else {
+                    if ("banner_top".equalsIgnoreCase(currentPreset)) {
+
+                        params.setMargins(0, systemSafeTop + currentAdHeightPixels, 0, systemSafeBottom);
+                    } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+
+                        params.setMargins(0, systemSafeTop, 0, systemSafeBottom + currentAdHeightPixels);
+                    } else {
+                        params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
+                    }
+                }
+
+            } else {
+
+                if ("banner_top".equalsIgnoreCase(currentPreset)) {
+                    params.setMargins(0, 0, 0, 0);
+
+                    if (isNativeVisible && !isOverlapping) {
+                        float shift = (float) (currentAdHeightPixels + systemSafeTop);
+                        webViewView.setTranslationY(shift);
+                    } else {
+                        webViewView.setTranslationY(0);
+                    }
+                } else if ("banner_bottom".equalsIgnoreCase(currentPreset)) {
+                    webViewView.setTranslationY(0);
+
+                    if (!isNativeVisible || isOverlapping) {
+                        params.setMargins(0, 0, 0, 0);
+                    } else {
+                        int finalBottom = currentAdHeightPixels + systemSafeBottom;
+                        params.setMargins(0, 0, 0, finalBottom);
+                    }
+                } else {
+                    webViewView.setTranslationY(0);
                     params.setMargins(0, 0, 0, 0);
                 }
             }
@@ -392,17 +532,29 @@ public class NativeExecutor {
         }
     }
 
-    private void resetWebViewMargins() {
-        if (webView == null || webView.getView() == null) return;
-        View webViewView = webView.getView();
-        ViewGroup.LayoutParams lp = webViewView.getLayoutParams();
-
-        if (lp instanceof ViewGroup.MarginLayoutParams) {
-            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
-            params.setMargins(0, 0, 0, 0);
-            webViewView.setLayoutParams(params);
-            webViewView.requestLayout();
+    private int getScreenHeightInPx() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            android.view.WindowMetrics windowMetrics = cordova.getActivity().getWindowManager().getCurrentWindowMetrics();
+            android.graphics.Insets insets = windowMetrics.getWindowInsets().getInsets(android.view.WindowInsets.Type.systemBars());
+            return windowMetrics.getBounds().height() - insets.top - insets.bottom;
+        } else {
+            DisplayMetrics displayMetrics = new DisplayMetrics();
+            cordova.getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+            return displayMetrics.heightPixels;
         }
+    }
+
+    public void destroy() {
+        cordova.getActivity().runOnUiThread(() -> {
+            removeNativeAd();
+            if (adContainer != null) {
+                if (adContainer.getParent() != null) {
+                    ((ViewGroup) adContainer.getParent()).removeView(adContainer);
+                }
+                adContainer.removeAllViews();
+                adContainer = null;
+            }
+        });
     }
 
     private void fireEvent(String eventName, JSONObject data) {

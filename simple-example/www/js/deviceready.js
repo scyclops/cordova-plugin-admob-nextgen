@@ -64,9 +64,9 @@ document.addEventListener("deviceready", function () {
         if (window.logToScreen) window.logToScreen("Requesting UMP Consent...");
         
         admobNextGen.requestConsentInfo({
-            debug: true, // Set to true for testing EEA geography
-            reset: false,
-            tagForUnderAgeOfConsent: false
+            debug: true, // true | false | Default/Production: false
+            reset: false, // true | false | Default/Production: false
+            tagForUnderAgeOfConsent: false, // true | false | Default: false
         }, function () {
             console.log("Consent Info Ready.");
             // UMP Success, continue to ATT or Init
@@ -108,9 +108,9 @@ document.addEventListener("deviceready", function () {
         if (window.logToScreen) window.logToScreen("Initializing AdMob SDK...");
         
         admobNextGen.initialize({
-            maxAdContentRating: 'G',        // 'G' || 'PG' || 'T' || 'MA' || ""
-            tagForChildDirectedTreatment: false,
-            tagForUnderAgeOfConsent: false,
+            maxAdContentRating: "", // 'G' | 'PG' | 'T' | 'MA' | Default: ""
+            tagForChildDirectedTreatment: false, // true | false | Default: null
+            tagForUnderAgeOfConsent: false, // true | false | Default: null
            // isNativeValidatorDisabled: false // optional param for: cordova-plugin-admob-nextgen-native
         }, function () {
             console.log(">>> AdMob SDK Initialized & Ready <<<");
