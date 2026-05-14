@@ -11,7 +11,9 @@
 
 **The Ultimate AdMob Monetization Solution for Cordova/Capacitor/Framework7.**
 
-This plugin is a complete **rewrite and re-architecture** of the classic AdMob integration, built specifically for the **[Google Mobile Ads Next Generation SDK](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html)**. It moves away from legacy implementations to modern `SurfaceControl`, optimized layouts, and background threading, ensuring maximum performance, stability, and revenue.
+This plugin is a complete **rewrite and re-architecture** of the classic AdMob integration, built specifically for the **[Google Mobile Ads Next Generation SDK](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html)**. 
+
+It moves away from legacy implementations to modern `SurfaceControl`, optimized layouts, and background threading, ensuring maximum performance, stability, and revenue.
 
 > **Maintained by the original creator of [EMI-INDO/emi-indo-cordova-plugin-admob](https://github.com/EMI-INDO/emi-indo-cordova-plugin-admob).** This is not just an update; it is a brand new engine designed for 2026 and beyond.
 
@@ -19,57 +21,87 @@ This plugin is a complete **rewrite and re-architecture** of the classic AdMob i
 
 ## 🚀 Why Next-Gen?
 
-Google has introduced a fundamental shift in how ads are rendered on Android. This plugin aligns perfectly with those changes to solve the most critical issues developers face today:
+Google has introduced a fundamental shift in how ads are rendered on Android. 
 
-1.  **Lifecycle Stability:** Solves the notorious issue where Full-Screen Ads (Interstitial, Rewarded, App Open) would crash or disappear when the app goes to the background and returns to the foreground.
-2.  **Android 15+ Compatibility:** Includes a built-in workaround for the [Android 15 Edge-to-Edge enforcement](https://groups.google.com/g/google-admob-ads-sdk/c/WyGsRV--EoE). It ensures the "Close/X" buttons on full-screen ads are never hidden behind the system navigation bar (API Level 35 fix).
-3.  **Clean Architecture:** Written from scratch using the official [Next Gen SDK Examples](https://github.com/googleads/gma-next-gen-sdk-android-examples), ensuring long-term compliance with Google Policies.
+This plugin aligns perfectly with those changes to solve the most critical issues developers face today:
 
----
+1. **ANR Error Elimination:** 
+   The legacy SDK is notorious for causing ANR (Application Not Responding) errors in the Google Play Console. This Next-Gen architecture fully resolves these threading bottlenecks. 
+   *(See [Google's Next-Gen Announcement](https://ads-developers.googleblog.com/2026/01/announcing-google-mobile-ads-next-gen.html))*
+
+2. **Lifecycle Stability:** 
+   Solves the notorious issue where Full-Screen Ads (Interstitial, Rewarded, App Open) would crash or disappear when the app goes to the background and returns to the foreground.
+
+3. **Smart Runtime Engine (Android 15 Edge-to-Edge):** 
+   Intelligently detects and handles Android 14 (API 35) vs Android 15 (API 36) edge-to-edge conditions at runtime.
+   * Automatically secures the "Close/X" buttons on full-screen ads.
+   * When using the banner parameter `isOverlapping: false`, it intelligently calculates the system safe bottom insets to push the WebView content up perfectly.
+   * Ensures neither the ad nor your app UI is hidden behind the system navigation bar.
+   * Requires **zero** manual configuration from the user. 
+   *(See [Release v1.3.9-beta.1](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/releases/tag/v1.3.9-beta.1))*
+
+4. **Cordova & Capacitor Agnostic:** 
+   Intelligently identifies whether the runtime environment is Cordova or Capacitor (including deep native Java logic adjustments) to provide seamless compatibility.
+
+5. **Clean Architecture:** 
+   Written from scratch using the official [Next Gen SDK Examples](https://github.com/googleads/gma-next-gen-sdk-android-examples), ensuring long-term compliance with Google Policies.
+
 
 ## 💰 Mission: Revenue Maximization
 
-This plugin is designed with one goal: **increasing your eCPM and fill rates**. We have implemented advanced formats and technologies that are proven to outperform standard implementations.
+This plugin is designed with one goal: 
+
+**increasing your eCPM and fill rates**. 
+
+ It incorporates advanced formats and technologies that are proven to outperform standard implementations.
 
 ### 1. True Next-Gen Speed: Ad Preloading API ⚡
-This is the **real** Next-Gen feature. We have implemented the specific Preload API methods: `startBannerPreload` and `showPreloadedBanner`.
+This is the **real** Next-Gen feature, this plugin implements the specific Preload API methods: `startBannerPreload` and `showPreloadedBanner`.
 * **Zero Latency:** Instead of loading an ad when you need it, the plugin maintains a "pool" of ready-to-show ads in the background.
 * **Instant Show:** When you call `showPreloadedBanner`, the ad appears instantly (0ms delay) from the pool.
 
 ### 2. Collapsible Banners (The Revenue Booster)
-Standard banners are often ignored by users. This plugin supports **Collapsible Banners** natively.
-* **Impact:** Typically delivers **3-5% higher revenue** than standard banners.
+Standard banners are often ignored by users. 
+
+This plugin supports **Collapsible Banners** natively.
+* **Impact:** Typically delivers **3-5% higher revenue** than standard or large adaptive banners.
 * **Mechanism:** Shows a larger ad initially (anchored top/bottom) that can be collapsed by the user, drastically increasing visibility and click-through rates (CTR).
 
 ### 3. Native Advanced Overlay (The Banner Killer)
-Move beyond simple 320x50 banners. The Native Overlay feature allows you to render high-performance Native Ads that look like system notifications.
+Move beyond simple 320x50 banners. 
+
+The Native Overlay feature allows you to render high-performance Native Ads that look like system notifications.
 * **Impact:** Can yield **5-10% higher revenue** compared to standard banners due to higher advertiser demand for Native assets.
 * **Smart Templates:**
     * `banner_bottom`: A sleek, notification-style ad docked at the bottom.
     * `banner_top`: Docked at the top.
     * `modal_center`: A popup-style native ad.
-    * **Policy Safe:** Includes an `isOverlapping` parameter. You can choose to overlay the ad (float) or push the webview content (safe layout), preventing accidental clicks.
-
----
+* **Policy Safe:** Includes an `isOverlapping` parameter.
+* You can choose to overlay the ad (float) or push the webview content (safe layout), preventing accidental clicks.
 
 
 ## 🛡️ Safety & Reliability
 
-We prioritize the safety of your AdMob account and the stability of your app.
+This plugin prioritizes the safety of your AdMob account and the stability of your app.
 
-* **Smart Throttling (`retryInterval`)**: Prevents accidental spamming of ad requests using a global interval validation.
+* **Smart Throttling (`retryInterval`)**: Solves the dreaded "high requests, low impressions" (Invalid Traffic / IVT) issue.
 
-- If the loadAd or showAd function is called repeatedly accidentally by JavaScript (for example because it is tied to a scroll event or application loop), the system will continuously call loadAd or showAd.
-### This will cause two fatal problems:
-1. Banner Ad Flickering: Ads are constantly being destroyed and redrawn.
-2. Account Ban: Aggressively pulling ads (spamming impressions) is a serious violation of AdMob's Invalid Traffic (IVT) policy.
+* This parameter acts as a strict anti-spam safeguard.
+* If an ad load is accidentally triggered repeatedly by an app logic error (e.g., game loop, tick, or scroll event) before the ad surfaces and is viewed by the user, the `retryInterval` automatically blocks the redundant requests.
+  
+  **Without this safeguard, you face two fatal problems:**
+  1. **Banner Ad Flickering:** Ads are constantly being destroyed and redrawn before becoming visible.
+  2. **Account Ban:** Aggressively pulling ads (spamming requests without impressions) is a serious violation of AdMob's Invalid Traffic policy.
 
 * **Background Thread Loading**: All ad requests are dispatched on background threads, ensuring your app's UI never freezes.
+
 
 ---
 
 
-## Cordova/Capacitor/Framework7 AdMob Next-Gen: Installation & Usage Guide
+## Cordova/Capacitor/Framework7 AdMob Next-Gen: 
+
+### Installation & Usage Guide
 
 ---
 > Fastest test (APK Debug): **[⚡ With github action ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/4)** (Optional)
@@ -84,14 +116,14 @@ We prioritize the safety of your AdMob account and the stability of your app.
 ## 1. Cordova or Framework7
 
 ### Option A: Via CLI
-Install the plugin directly using the Cordova CLI. You must provide your AdMob App ID.
+Install the plugin directly using the Cordova CLI, You must provide your AdMob App ID.
 
     cordova plugin add cordova-plugin-admob-nextgen --save --variable APP_ID_ANDROID="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" --variable APP_ID_IOS="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy"
 
 ### Option B: Via config.xml
 Add this to your `config.xml` to restore the plugin automatically.
 
-    <plugin name="cordova-plugin-admob-nextgen" spec="latest">
+    <plugin name="cordova-plugin-admob-nextgen">
         <variable name="APP_ID_ANDROID" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
         <variable name="APP_ID_IOS" value="ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy" />
     </plugin>
@@ -509,7 +541,7 @@ Auto-showing rewarded format (no opt-in).
 **No Ad-Sharing. No Hidden Fees.**
 
 Unlike many other free plugins, this project is clean:
-* **0% Revenue Share:** We do not inject our own Ad Unit IDs into your traffic.
+* **0% Revenue Share:** This plugin do not inject our own Ad Unit IDs into your traffic.
 * **100% Control:** Every impression and click goes directly to your AdMob account.
 * **Transparent Source:** The code is open source. You can verify that no third-party SDKs or hidden backdoors exist.
 
@@ -517,7 +549,8 @@ Unlike many other free plugins, this project is clean:
 
 ## ❤️ Support the Project
 
-This plugin is developed and maintained in my free time. If it saved you hours of work, consider supporting the development!
+This plugin is developed and maintained in my free time. 
+If it saved you hours of work, consider supporting the development!
 
 <a href="https://www.buymeacoffee.com/emi.indo" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
