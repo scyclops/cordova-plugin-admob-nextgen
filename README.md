@@ -108,7 +108,7 @@ This plugin prioritizes the safety of your AdMob account and the stability of yo
 ---
 
 ### 🎉 View all plugin release notes
-- 👉 [**Releases**](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/releases)
+- 👉 [**Releases notes**](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/releases)
 
 ---
 

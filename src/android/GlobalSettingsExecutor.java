@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import com.google.android.libraries.ads.mobile.sdk.MobileAds;
 import com.google.android.libraries.ads.mobile.sdk.common.RequestConfiguration;
+import com.google.android.libraries.ads.mobile.sdk.common.AgeRestrictedTreatment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +36,8 @@ public class GlobalSettingsExecutor {
 
     public void setAppMuted(JSONArray args, CallbackContext callbackContext) {
         try {
-            boolean muted = args.getBoolean(0);
-            MobileAds.setUserMutedApp(muted);
+            boolean isMuted = args.getBoolean(0);
+            MobileAds.setUserMutedApp(isMuted);
             callbackContext.success();
         } catch (JSONException e) {
             callbackContext.error("Invalid mute value");
@@ -49,9 +50,9 @@ public class GlobalSettingsExecutor {
             RequestConfiguration requestConfiguration = buildRequestConfiguration(config);
 
             MobileAds.setRequestConfiguration(requestConfiguration);
-            callbackContext.success("Configuration Updated");
+            callbackContext.success("Configuration updated successfully");
         } catch (JSONException e) {
-            callbackContext.error("Config Error: " + e.getMessage());
+            callbackContext.error("Configuration error: " + e.getMessage());
         }
     }
 
@@ -59,19 +60,38 @@ public class GlobalSettingsExecutor {
         RequestConfiguration.Builder builder = new RequestConfiguration.Builder();
 
         try {
+            Boolean isChildDirected = parseBoolean(config, "tagForChildDirectedTreatment");
+            Boolean isUnderAgeOfConsent = parseBoolean(config, "tagForUnderAgeOfConsent");
 
-            RequestConfiguration.TagForChildDirectedTreatment coppaTag = parseChildDirectedTag(config, "tagForChildDirectedTreatment");
-            builder.setTagForChildDirectedTreatment(coppaTag);
+            if (Boolean.TRUE.equals(isChildDirected)) {
+                builder.setAgeRestrictedTreatment(AgeRestrictedTreatment.CHILD);
+            } else if (Boolean.TRUE.equals(isUnderAgeOfConsent)) {
+                builder.setAgeRestrictedTreatment(AgeRestrictedTreatment.TEEN);
+            } else if (Boolean.FALSE.equals(isChildDirected) || Boolean.FALSE.equals(isUnderAgeOfConsent)) {
 
-            RequestConfiguration.TagForUnderAgeOfConsent tfuaTag = parseUnderAgeTag(config, "tagForUnderAgeOfConsent");
-            builder.setTagForUnderAgeOfConsent(tfuaTag);
+                builder.setAgeRestrictedTreatment(AgeRestrictedTreatment.UNSPECIFIED);
+            }
 
             if (config.has("maxAdContentRating")) {
                 String rating = config.getString("maxAdContentRating");
-                if ("G".equals(rating)) builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_G);
-                else if ("PG".equals(rating)) builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_PG);
-                else if ("T".equals(rating)) builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_T);
-                else if ("MA".equals(rating)) builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_MA);
+                switch (rating.toUpperCase()) {
+                    case "G":
+                        builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_G);
+                        break;
+                    case "PG":
+                        builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_PG);
+                        break;
+                    case "T":
+                        builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_T);
+                        break;
+                    case "MA":
+                        builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_MA);
+                        break;
+                    case "":
+                    default:
+                        builder.setMaxAdContentRating(RequestConfiguration.MaxAdContentRating.MAX_AD_CONTENT_RATING_UNSPECIFIED);
+                        break;
+                }
             }
 
             if (config.has("testDeviceIds")) {
@@ -89,51 +109,20 @@ public class GlobalSettingsExecutor {
         return builder.build();
     }
 
-    private static RequestConfiguration.TagForChildDirectedTreatment parseChildDirectedTag(JSONObject config, String key) {
+    private static Boolean parseBoolean(JSONObject config, String key) {
         if (!config.has(key) || config.isNull(key)) {
-            return RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_UNSPECIFIED;
+            return null;
         }
 
-        if (config.optBoolean(key, false) || !config.optBoolean(key, true)) { 
-            Object val = config.opt(key);
-            if (val instanceof Boolean) {
-                return (Boolean) val ?
-                        RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE :
-                        RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_FALSE;
-            }
+        Object value = config.opt(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
         }
 
-        String valStr = config.optString(key);
-        if ("true".equalsIgnoreCase(valStr)) {
-            return RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE;
-        }
-        if ("false".equalsIgnoreCase(valStr)) {
-            return RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_FALSE;
-        }
+        String valueString = config.optString(key);
+        if ("true".equalsIgnoreCase(valueString)) return true;
+        if ("false".equalsIgnoreCase(valueString)) return false;
 
-        return RequestConfiguration.TagForChildDirectedTreatment.TAG_FOR_CHILD_DIRECTED_TREATMENT_UNSPECIFIED;
-    }
-
-    private static RequestConfiguration.TagForUnderAgeOfConsent parseUnderAgeTag(JSONObject config, String key) {
-        if (!config.has(key) || config.isNull(key)) {
-            return RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_UNSPECIFIED;
-        }
-
-        Object val = config.opt(key);
-        if (val instanceof Boolean) {
-            return (Boolean) val ?
-                    RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE :
-                    RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_FALSE;
-        }
-
-        String valStr = config.optString(key);
-        if ("true".equalsIgnoreCase(valStr)) {
-            return RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE;
-        }
-        if ("false".equalsIgnoreCase(valStr)) {
-            return RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_FALSE;
-        }
-
-        return RequestConfiguration.TagForUnderAgeOfConsent.TAG_FOR_UNDER_AGE_OF_CONSENT_UNSPECIFIED;
+        return null;
     }
 }
