@@ -113,7 +113,8 @@ var AdMobNextGen = {
     showAppOpenAd: function (success, error) {
         exec(success, error, 'AdMobNextGen', 'showAppOpenAd', []);
     },
-
+    
+    // Only Android
     createNativeAd: function (options, successEvent, error) {
         var isCapacitorEnvironment = typeof window.Capacitor !== 'undefined';
         var isCordova15Environment = false;
@@ -171,7 +172,56 @@ var AdMobNextGen = {
 
     isAppOpenAdAvailable: function (success, error) {
         exec(success, error, 'AdMobNextGen', 'isAppOpenAdAvailable', []);
+    },
+
+    startInterstitialPreload: function (options, success, error) {
+        exec(success, error, 'AdMobNextGen', 'startInterstitialPreload', [options]);
+    },
+
+    showPreloadedInterstitial: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'showPreloadedInterstitial', []);
+    },
+
+    isInterstitialAdAvailable: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'isInterstitialAdAvailable', []);
+    },
+
+    stopInterstitialPreload: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'stopInterstitialPreload', []);
+    },
+
+    startRewardedPreload: function (options, success, error) {
+        exec(success, error, 'AdMobNextGen', 'startRewardedPreload', [options]);
+    },
+
+    showPreloadedRewarded: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'showPreloadedRewarded', []);
+    },
+
+    isRewardedAdAvailable: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'isRewardedAdAvailable', []);
+    },
+
+    stopRewardedPreload: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'stopRewardedPreload', []);
+    },
+
+    startRewardedInterstitialPreload: function (options, success, error) {
+        exec(success, error, 'AdMobNextGen', 'startRewardedInterstitialPreload', [options]);
+    },
+
+    showPreloadedRewardedInterstitial: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'showPreloadedRewardedInterstitial', []);
+    },
+
+    isRewardedInterstitialAdAvailable: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'isRewardedInterstitialAdAvailable', []);
+    },
+
+    stopRewardedInterstitialPreload: function (success, error) {
+        exec(success, error, 'AdMobNextGen', 'stopRewardedInterstitialPreload', []);
     }
+
 };
 
 module.exports = AdMobNextGen;

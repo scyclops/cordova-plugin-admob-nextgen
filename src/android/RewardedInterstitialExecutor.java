@@ -1,5 +1,7 @@
 package com.emi.cordova.admob.nextgen;
 
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
+
 import android.app.Activity;
 import android.util.Log;
 
@@ -44,6 +46,10 @@ public class RewardedInterstitialExecutor {
     }
 
     public void createRewardedInterstitial(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             JSONObject options = args.getJSONObject(0);
             String adUnitId = options.getString("adUnitId");
@@ -63,6 +69,7 @@ public class RewardedInterstitialExecutor {
 
             if ((currentTime - lastLoadTime) < minLoadInterval) {
 
+                if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
                 callbackContext.error("Request too fast");
                 return;
             }

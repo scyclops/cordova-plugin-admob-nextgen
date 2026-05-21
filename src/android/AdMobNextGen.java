@@ -1,5 +1,11 @@
 package com.emi.cordova.admob.nextgen;
 
+import com.emi.cordova.admob.nextgen.preloading.AppOpenAdPreloadExecutor;
+import com.emi.cordova.admob.nextgen.preloading.BannerPreloadExecutor;
+import com.emi.cordova.admob.nextgen.preloading.InterstitialPreloadExecutor;
+import com.emi.cordova.admob.nextgen.preloading.RewardedPreloadExecutor;
+import com.emi.cordova.admob.nextgen.preloading.RewardedInterstitialPreloadExecutor;
+
 import android.app.Activity;
 import android.app.Application; 
 import android.content.Context;
@@ -40,8 +46,12 @@ public class AdMobNextGen extends CordovaPlugin {
 
     private BannerPreloadExecutor bannerPreloadExecutor;
     private AppOpenAdPreloadExecutor appOpenAdPreloadExecutor;
+    private InterstitialPreloadExecutor interstitialPreloadExecutor;
+    private RewardedPreloadExecutor rewardedPreloadExecutor;
+    private RewardedInterstitialPreloadExecutor rewardedInterstitialPreloadExecutor;
 
     private boolean isNativeValidatorDisabled = true;
+    public static boolean isInitialized = false;
 
     @Override
     public void pluginInitialize() {
@@ -49,19 +59,24 @@ public class AdMobNextGen extends CordovaPlugin {
 
         applyAdMobAPI35WorkaroundIfNeeded(cordova.getActivity().getApplication());
 
+        globalSettingsExecutor = new GlobalSettingsExecutor(cordova);
+        consentExecutor = new ConsentExecutor(cordova, webView);
+        appOpenAdExecutor = AppOpenAdExecutor.getInstance();
+        appOpenAdExecutor.initialize(cordova, webView);
+
         bannerExecutor = new BannerExecutor(cordova, webView);
         interstitialExecutor = new InterstitialExecutor(cordova, webView);
         rewardedExecutor = new RewardedExecutor(cordova, webView);
         rewardedInterstitialExecutor = new RewardedInterstitialExecutor(cordova, webView);
-        consentExecutor = new ConsentExecutor(cordova, webView);
-        globalSettingsExecutor = new GlobalSettingsExecutor(cordova);
 
-        appOpenAdExecutor = AppOpenAdExecutor.getInstance();
-        appOpenAdExecutor.initialize(cordova, webView);
         nativeExecutor = new NativeExecutor(cordova, webView);
 
-        bannerPreloadExecutor = new BannerPreloadExecutor(cordova, webView);
         appOpenAdPreloadExecutor = new AppOpenAdPreloadExecutor(cordova, webView);
+        bannerPreloadExecutor = new BannerPreloadExecutor(cordova, webView);
+        interstitialPreloadExecutor = new InterstitialPreloadExecutor(cordova, webView);
+        rewardedPreloadExecutor = new RewardedPreloadExecutor(cordova, webView);
+        rewardedInterstitialPreloadExecutor = new RewardedInterstitialPreloadExecutor(cordova, webView);
+
     }
 
     @Override
@@ -115,41 +130,9 @@ public class AdMobNextGen extends CordovaPlugin {
             return true;
         }
 
-        if ("startBannerPreload".equals(action)) {
-            bannerPreloadExecutor.startPreload(args, callbackContext);
-            return true;
-        }
-        if ("showPreloadedBanner".equals(action)) {
-            bannerPreloadExecutor.showPolledAd(args, callbackContext);
-            return true;
-        }
-        if ("stopBannerPreload".equals(action)) {
-            bannerPreloadExecutor.stopPreloadAndClear();
-            callbackContext.success();
-            return true;
-        }
-
-        if ("hideBannerPreload".equals(action)) {
-            bannerPreloadExecutor.hideBanner(callbackContext);
-            return true;
-        }
-
         if ("removeBanner".equals(action)) {
             bannerExecutor.destroy();
             callbackContext.success();
-            return true;
-        }
-
-        if ("startAppOpenPreload".equals(action)) {
-            appOpenAdPreloadExecutor.startPreload(args, callbackContext);
-            return true;
-        }
-        if ("showPreloadedAppOpenAd".equals(action)) {
-            appOpenAdPreloadExecutor.showPolledAd(args, callbackContext);
-            return true;
-        }
-        if ("isAppOpenAdAvailable".equals(action)) {
-            appOpenAdPreloadExecutor.checkAdAvailable(args, callbackContext);
             return true;
         }
 
@@ -181,6 +164,7 @@ public class AdMobNextGen extends CordovaPlugin {
             nativeExecutor.createNativeAd(args, callbackContext);
             return true;
         }
+
         if ("removeNativeAd".equals(action)) {
             nativeExecutor.removeNativeAd();
             callbackContext.success();
@@ -189,6 +173,7 @@ public class AdMobNextGen extends CordovaPlugin {
 
         if ("createInterstitial".equals(action)) {
             interstitialExecutor.createInterstitial(args, callbackContext);
+            callbackContext.success();
             return true;
         }
         if ("showInterstitial".equals(action)) {
@@ -200,6 +185,7 @@ public class AdMobNextGen extends CordovaPlugin {
             rewardedExecutor.createRewarded(args, callbackContext);
             return true;
         }
+
         if ("showRewarded".equals(action)) {
             rewardedExecutor.showRewarded(callbackContext);
             return true;
@@ -209,8 +195,98 @@ public class AdMobNextGen extends CordovaPlugin {
             rewardedInterstitialExecutor.createRewardedInterstitial(args, callbackContext);
             return true;
         }
+
         if ("showRewardedInterstitial".equals(action)) {
             rewardedInterstitialExecutor.showRewardedInterstitial(callbackContext);
+            return true;
+        }
+
+        if ("startAppOpenPreload".equals(action)) {
+            appOpenAdPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+        if ("showPreloadedAppOpenAd".equals(action)) {
+            appOpenAdPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+        if ("isAppOpenAdAvailable".equals(action)) {
+            appOpenAdPreloadExecutor.checkAdAvailable(args, callbackContext);
+            return true;
+        }
+
+        if ("startBannerPreload".equals(action)) {
+            bannerPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+        if ("showPreloadedBanner".equals(action)) {
+            bannerPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+        if ("stopBannerPreload".equals(action)) {
+            bannerPreloadExecutor.stopPreloadAndClear();
+            callbackContext.success();
+            return true;
+        }
+
+        if ("hideBannerPreload".equals(action)) {
+            bannerPreloadExecutor.hideBanner(callbackContext);
+            return true;
+        }
+
+        if ("startInterstitialPreload".equals(action)) {
+            interstitialPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+        if ("showPreloadedInterstitial".equals(action)) {
+            interstitialPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+        if ("isInterstitialAdAvailable".equals(action)) {
+            interstitialPreloadExecutor.checkAdAvailable(args, callbackContext);
+            return true;
+        }
+        if ("stopInterstitialPreload".equals(action)) {
+            interstitialPreloadExecutor.stopPreloadAndClear(callbackContext);
+            return true;
+        }
+
+        if ("startRewardedPreload".equals(action)) {
+            rewardedPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+
+        if ("showPreloadedRewarded".equals(action)) {
+            rewardedPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+
+        if ("isRewardedAdAvailable".equals(action)) {
+            rewardedPreloadExecutor.checkAdAvailable(args, callbackContext);
+            return true;
+        }
+
+        if ("stopRewardedPreload".equals(action)) {
+            rewardedPreloadExecutor.stopPreloadAndClear(callbackContext);
+            return true;
+        }
+
+        if ("startRewardedInterstitialPreload".equals(action)) {
+            rewardedInterstitialPreloadExecutor.startPreload(args, callbackContext);
+            return true;
+        }
+
+        if ("showPreloadedRewardedInterstitial".equals(action)) {
+            rewardedInterstitialPreloadExecutor.showPolledAd(args, callbackContext);
+            return true;
+        }
+
+        if ("isRewardedInterstitialAdAvailable".equals(action)) {
+            rewardedInterstitialPreloadExecutor.checkAdAvailable(args, callbackContext);
+            return true;
+        }
+
+        if ("stopRewardedInterstitialPreload".equals(action)) {
+            rewardedInterstitialPreloadExecutor.stopPreloadAndClear(callbackContext);
             return true;
         }
 
@@ -262,6 +338,7 @@ public class AdMobNextGen extends CordovaPlugin {
                     cordova.getActivity(),
                     config,
                     initializationStatus -> {
+                        isInitialized = true;
                         cordova.getActivity().runOnUiThread(() -> callbackContext.success("Initialized"));
                     }
             );

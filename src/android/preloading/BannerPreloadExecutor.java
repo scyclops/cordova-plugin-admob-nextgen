@@ -1,4 +1,6 @@
-package com.emi.cordova.admob.nextgen;
+package com.emi.cordova.admob.nextgen.preloading;
+
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -71,6 +73,10 @@ public class BannerPreloadExecutor {
     }
 
     public void startPreload(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             JSONObject options = args.getJSONObject(0);
             String adUnitId = options.getString("adUnitId");
@@ -200,7 +206,7 @@ public class BannerPreloadExecutor {
 
         long currentTime = new Date().getTime();
         if ((currentTime - lastShowTime) < minShowInterval) {
-            callbackContext.error("Spam protection active: Please wait " + minShowInterval + "ms.");
+            callbackContext.error("Request too fast. Please wait " + minShowInterval + " ms to prevent invalid traffic.");
             return;
         }
 

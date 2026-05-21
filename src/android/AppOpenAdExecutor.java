@@ -1,5 +1,7 @@
 package com.emi.cordova.admob.nextgen;
 
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
+
 import android.app.Activity;
 import android.util.Log;
 
@@ -56,6 +58,10 @@ public class AppOpenAdExecutor {
     }
 
     public void loadAd(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             JSONObject options = args.optJSONObject(0);
             String adUnitId;
@@ -89,6 +95,7 @@ public class AppOpenAdExecutor {
         }
 
         if ((currentTime - lastLoadTime) < minLoadInterval) {
+            if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
             return;
         }
 

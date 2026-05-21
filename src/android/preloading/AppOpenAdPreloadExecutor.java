@@ -1,4 +1,6 @@
-package com.emi.cordova.admob.nextgen;
+package com.emi.cordova.admob.nextgen.preloading;
+
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
 
 import android.util.Log;
 
@@ -47,6 +49,10 @@ public class AppOpenAdPreloadExecutor {
     }
 
     public void startPreload(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             long currentTime = new Date().getTime();
             String adUnitId = null;
@@ -142,7 +148,7 @@ public class AppOpenAdPreloadExecutor {
 
         if (new Date().getTime() - lastAdDismissTime < 1000) {
 
-            if (callbackContext != null) callbackContext.error("Ad in cooldown period.");
+            if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + lastAdDismissTime + " ms to prevent invalid traffic.");
             return;
         }
 
@@ -257,6 +263,7 @@ public class AppOpenAdPreloadExecutor {
     }
 
     public boolean shouldAutoShow() {
+
         return this.isAutoShow;
     }
 

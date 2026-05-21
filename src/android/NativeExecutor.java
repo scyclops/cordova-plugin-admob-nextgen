@@ -1,5 +1,7 @@
 package com.emi.cordova.admob.nextgen;
 
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
+
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.TextUtils;
@@ -70,6 +72,10 @@ public class NativeExecutor {
     }
 
     public void createNativeAd(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             JSONObject options = args.getJSONObject(0);
             String adUnitId = options.getString("adUnitId");
@@ -88,6 +94,7 @@ public class NativeExecutor {
 
             if ((currentTime - lastLoadTime) < minLoadInterval) {
 
+                if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
                 callbackContext.error("Request too fast");
                 return;
             }

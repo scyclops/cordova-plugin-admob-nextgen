@@ -1,5 +1,7 @@
 package com.emi.cordova.admob.nextgen;
 
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
@@ -74,6 +76,11 @@ public class BannerExecutor {
     }
 
     public void createBanner(JSONArray args, CallbackContext callbackContext) {
+        if (!isInitialized) {
+
+            callbackContext.error("SDK not initialized");
+            return;
+        }
         try {
             JSONObject options = args.getJSONObject(0);
             String adUnitId = options.getString("adUnitId");
@@ -139,7 +146,7 @@ public class BannerExecutor {
                 }
 
                 if ((currentTime - lastLoadTime) < minLoadInterval) {
-                    callbackContext.error("Request too fast. Wait " + minLoadInterval + "ms");
+                    callbackContext.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
                     return;
                 }
 

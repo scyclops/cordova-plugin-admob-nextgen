@@ -1,5 +1,7 @@
 package com.emi.cordova.admob.nextgen;
 
+import static com.emi.cordova.admob.nextgen.AdMobNextGen.isInitialized;
+
 import android.app.Activity;
 import android.util.Log;
 
@@ -65,6 +67,10 @@ public class InterstitialExecutor {
     }
 
     private void loadInterstitial(String adUnitId, CallbackContext requestCallback) {
+        if (!isInitialized) {
+            requestCallback.error("SDK not initialized");
+            return;
+        }
         long currentTime = new Date().getTime();
 
         if (isLoading) {
@@ -80,6 +86,7 @@ public class InterstitialExecutor {
 
         if ((currentTime - lastLoadTime) < minLoadInterval) {
 
+            if (requestCallback != null) requestCallback.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
             return;
         }
 
@@ -194,7 +201,6 @@ public class InterstitialExecutor {
                     fireEvent("on.interstitial.clicked", null);
                 }
             });
-
                 interstitialAd.show(activity);
         });
     }
