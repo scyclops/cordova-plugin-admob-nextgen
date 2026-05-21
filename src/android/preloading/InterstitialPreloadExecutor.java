@@ -81,7 +81,13 @@ public class InterstitialPreloadExecutor {
                     @Override
                     public void onAdPreloaded(@NonNull String preloadId, @NonNull ResponseInfo responseInfo) {
 
-                        fireEvent("on.interstitial.preload.available", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.interstitial.preload.available", data);
+                        } catch (JSONException ignored) {}
+
                         if (isAutoShow) {
 
                             new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
@@ -98,7 +104,9 @@ public class InterstitialPreloadExecutor {
                             JSONObject err = new JSONObject();
                             err.put("message", adError.getMessage());
                             err.put("code", adError.getCode());
-                            fireEvent("on.interstitial.preload.failed", err);
+                            err.put("adUnitId", adUnitId);
+                            err.put("source", "preloader");
+                            fireEvent("on.interstitial.failed", err);
                         } catch (JSONException ignored) {
                         }
                     }
@@ -106,7 +114,12 @@ public class InterstitialPreloadExecutor {
                     @Override
                     public void onAdsExhausted(@NonNull String preloadId) {
 
-                        fireEvent("on.interstitial.preload.exhausted", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.interstitial.preload.exhausted", data);
+                        } catch (JSONException ignored) {}
                     }
                 };
 
@@ -186,17 +199,29 @@ public class InterstitialPreloadExecutor {
         ad.setAdEventCallback(new InterstitialAdEventCallback() {
             @Override
             public void onAdImpression() {
-                fireEvent("on.interstitial.impression", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.interstitial.impression", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdShowedFullScreenContent() {
-                fireEvent("on.interstitial.opened", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.interstitial.opened", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdDismissedFullScreenContent() {
-                fireEvent("on.interstitial.closed", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.interstitial.closed", data);
+                } catch (JSONException ignored) {}
 
             }
 
@@ -206,6 +231,7 @@ public class InterstitialPreloadExecutor {
                     JSONObject errData = new JSONObject();
                     errData.put("message", error.getMessage());
                     errData.put("code", error.getCode());
+                    errData.put("source", "preloader");
                     fireEvent("on.interstitial.failed.show", errData);
                 } catch (JSONException ignored) {}
             }

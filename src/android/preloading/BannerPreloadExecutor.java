@@ -128,14 +128,14 @@ public class BannerPreloadExecutor {
                 PreloadCallback preloadCallback = new PreloadCallback() {
                     @Override
                     public void onAdPreloaded(@NonNull String preloadId, @NonNull ResponseInfo responseInfo) {
-                        fireEvent("on.preload.available", null);
+                        fireEvent("on.banner.preload.available", null);
                     }
                     @Override
                     public void onAdFailedToPreload(@NonNull String preloadId, @NonNull LoadAdError loadAdError) {
                         try {
                             JSONObject err = new JSONObject();
                             err.put("message", loadAdError.getMessage());
-                            fireEvent("on.preload.failed", err);
+                            fireEvent("on.banner.failed", err);
                         } catch (JSONException ignored) {}
                     }
                     @Override
@@ -589,10 +589,22 @@ public class BannerPreloadExecutor {
     private void setupAdEvents(BannerAd ad) {
         ad.setAdEventCallback(new BannerAdEventCallback() {
             @Override
-            public void onAdImpression() { fireEvent("on.banner.impression", null); }
+            public void onAdImpression() {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.banner.impression", data);
+                } catch (JSONException ignored) {}
+            }
 
             @Override
-            public void onAdClicked() { fireEvent("on.banner.clicked", null); }
+            public void onAdClicked() {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.banner.clicked", data);
+                } catch (JSONException ignored) {}
+            }
 
             @Override
             public void onAdPaid(@NonNull AdValue adValue) {
@@ -607,16 +619,29 @@ public class BannerPreloadExecutor {
             }
 
             @Override
-            public void onAdShowedFullScreenContent() { fireEvent("on.banner.opened", null); }
+            public void onAdShowedFullScreenContent() {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.banner.opened", data);
+                } catch (JSONException ignored) {}
+            }
 
             @Override
-            public void onAdDismissedFullScreenContent() { fireEvent("on.banner.closed", null); }
+            public void onAdDismissedFullScreenContent() {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.banner.closed", data);
+                } catch (JSONException ignored) {}
+            }
 
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull FullScreenContentError error) {
                 try {
                     JSONObject errData = new JSONObject();
                     errData.put("message", error.getMessage());
+                    errData.put("source", "preloader");
                     fireEvent("on.banner.failed.show", errData);
                 } catch (JSONException ignored) {}
             }
@@ -624,13 +649,20 @@ public class BannerPreloadExecutor {
 
         ad.setBannerAdRefreshCallback(new BannerAdRefreshCallback() {
             @Override
-            public void onAdRefreshed() { fireEvent("on.banner.refreshed", null); }
+            public void onAdRefreshed() {
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.banner.refreshed", data);
+                } catch (JSONException ignored) {}
+            }
 
             @Override
             public void onAdFailedToRefresh(@NonNull LoadAdError loadAdError) {
                 try {
                     JSONObject err = new JSONObject();
                     err.put("message", loadAdError.getMessage());
+                    err.put("source", "preloader");
                     fireEvent("on.banner.refresh.failed", err);
                 } catch (JSONException ignored) {}
             }
@@ -646,7 +678,7 @@ public class BannerPreloadExecutor {
             data.put("widthPixels", adSize.getWidthInPixels(context));
             data.put("heightPixels", adSize.getHeightInPixels(context));
             data.put("isCollapsible", isCollapsible);
-
+            data.put("source", "preloader");
             fireEvent("on.banner.load", data);
         } catch (JSONException ignored) {}
     }

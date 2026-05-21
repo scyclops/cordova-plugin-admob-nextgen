@@ -86,7 +86,12 @@ public class RewardedPreloadExecutor {
                     @Override
                     public void onAdPreloaded(@NonNull String preloadId, @NonNull ResponseInfo responseInfo) {
 
-                        fireEvent("on.rewarded.preload.available", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.rewarded.loaded", data);
+                        } catch (JSONException ignored) {}
 
                         if (isAutoShow) {
                             new Handler(Looper.getMainLooper()).post(() -> {
@@ -102,14 +107,21 @@ public class RewardedPreloadExecutor {
                             JSONObject err = new JSONObject();
                             err.put("message", adError.getMessage());
                             err.put("code", adError.getCode());
-                            fireEvent("on.rewarded.preload.failed", err);
+                            err.put("adUnitId", adUnitId);
+                            err.put("source", "preloader");
+                            fireEvent("on.rewarded.failed.load", err);
                         } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdsExhausted(@NonNull String preloadId) {
 
-                        fireEvent("on.rewarded.preload.exhausted", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.rewarded.preload.exhausted", data);
+                        } catch (JSONException ignored) {}
                     }
                 };
 
@@ -151,7 +163,8 @@ public class RewardedPreloadExecutor {
                     JSONObject data = new JSONObject();
                     data.put("amount", rewardItem.getAmount());
                     data.put("type", rewardItem.getType());
-                    fireEvent("on.rewarded.reward", data);
+                    data.put("source", "preloader");
+                    fireEvent("on.rewarded.earned", data);
                 } catch (JSONException ignored) {}
             });
 
@@ -185,6 +198,7 @@ public class RewardedPreloadExecutor {
     }
 
     public void setAutoShow(boolean shouldAutoShow) {
+
         this.isAutoShow = shouldAutoShow;
     }
 
@@ -192,17 +206,29 @@ public class RewardedPreloadExecutor {
         ad.setAdEventCallback(new RewardedAdEventCallback() {
             @Override
             public void onAdImpression() {
-                fireEvent("on.rewarded.impression", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewarded.impression", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdShowedFullScreenContent() {
-                fireEvent("on.rewarded.opened", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewarded.shown", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdDismissedFullScreenContent() {
-                fireEvent("on.rewarded.closed", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewarded.dismissed", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
@@ -211,6 +237,7 @@ public class RewardedPreloadExecutor {
                     JSONObject errData = new JSONObject();
                     errData.put("message", error.getMessage());
                     errData.put("code", error.getCode());
+                    errData.put("source", "preloader");
                     fireEvent("on.rewarded.failed.show", errData);
                 } catch (JSONException ignored) {}
             }

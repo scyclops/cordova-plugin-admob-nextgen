@@ -99,7 +99,8 @@ public class AppOpenAdPreloadExecutor {
                         errData.put("preloadId", preloadId);
                         errData.put("code", loadAdError.getCode());
                         errData.put("message", loadAdError.getMessage());
-                        fireEvent("on.appopen.preload.failed", errData);
+                        errData.put("source", "preloader");
+                        fireEvent("on.appopen.failed.load", errData);
                     } catch (JSONException ignored) {}
                 }
 
@@ -108,6 +109,7 @@ public class AppOpenAdPreloadExecutor {
                     try {
                         JSONObject data = new JSONObject();
                         data.put("preloadId", preloadId);
+                        data.put("source", "preloader");
                         fireEvent("on.appopen.preload.exhausted", data);
                     } catch (JSONException ignored) {}
                 }
@@ -117,7 +119,8 @@ public class AppOpenAdPreloadExecutor {
                     try {
                         JSONObject data = new JSONObject();
                         data.put("preloadId", preloadId);
-                        fireEvent("on.appopen.preload.loaded", data);
+                        data.put("source", "preloader");
+                        fireEvent("on.appopen.loaded", data);
                     } catch (JSONException ignored) {}
                 }
             };
@@ -186,7 +189,8 @@ public class AppOpenAdPreloadExecutor {
                     try {
                         JSONObject errData = new JSONObject();
                         errData.put("message", "No preloaded app open ads available.");
-                        fireEvent("on.appopen.preload.failed.show", errData);
+                        errData.put("source", "preloader");
+                        fireEvent("on.appopen.failed.show", errData);
                     } catch (JSONException ignored) {}
 
                     if (callbackContext != null) {
@@ -203,20 +207,29 @@ public class AppOpenAdPreloadExecutor {
                             data.put("value", adValue.getValueMicros());
                             data.put("currency", adValue.getCurrencyCode());
                             data.put("precision", adValue.getPrecisionType());
-                            fireEvent("on.appopen.preload.revenue", data);
+                            data.put("source", "preloader");
+                            fireEvent("on.appopen.revenue", data);
                         } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdShowedFullScreenContent() {
-                        fireEvent("on.appopen.preload.shown", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("source", "preloader");
+                            fireEvent("on.appopen.shown", data);
+                        } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdDismissedFullScreenContent() {
                         isShowingAd = false;
                         lastAdDismissTime = new Date().getTime();
-                        fireEvent("on.appopen.preload.dismissed", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("source", "preloader");
+                            fireEvent("on.appopen.dismissed", data);
+                        } catch (JSONException ignored) {}
                     }
 
                     @Override
@@ -226,18 +239,27 @@ public class AppOpenAdPreloadExecutor {
                             JSONObject errData = new JSONObject();
                             errData.put("code", error.getCode());
                             errData.put("message", error.getMessage());
-                            fireEvent("on.appopen.preload.failed.show", errData);
+                            errData.put("source", "preloader");
+                            fireEvent("on.appopen.failed.show", errData);
                         } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdImpression() {
-                        fireEvent("on.appopen.preload.impression", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("source", "preloader");
+                            fireEvent("on.appopen.impression", data);
+                        } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdClicked() {
-                        fireEvent("on.appopen.preload.clicked", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("source", "preloader");
+                            fireEvent("on.appopen.clicked", data);
+                        } catch (JSONException ignored) {}
                     }
                 });
 

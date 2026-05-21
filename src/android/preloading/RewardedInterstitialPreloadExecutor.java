@@ -88,7 +88,12 @@ public class RewardedInterstitialPreloadExecutor {
                     @Override
                     public void onAdPreloaded(@NonNull String preloadId, @NonNull ResponseInfo responseInfo) {
 
-                        fireEvent("on.rewardedinterstitial.preload.available", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.rewardedInter.loaded", data);
+                        } catch (JSONException ignored) {}
 
                         if (isAutoShow) {
                             new Handler(Looper.getMainLooper()).post(() -> {
@@ -104,14 +109,21 @@ public class RewardedInterstitialPreloadExecutor {
                             JSONObject err = new JSONObject();
                             err.put("message", adError.getMessage());
                             err.put("code", adError.getCode());
-                            fireEvent("on.rewardedinterstitial.preload.failed", err);
+                            err.put("adUnitId", adUnitId);
+                            err.put("source", "preloader");
+                            fireEvent("on.rewardedInter.failed.load", err);
                         } catch (JSONException ignored) {}
                     }
 
                     @Override
                     public void onAdsExhausted(@NonNull String preloadId) {
 
-                        fireEvent("on.rewardedinterstitial.preload.exhausted", null);
+                        try {
+                            JSONObject data = new JSONObject();
+                            data.put("adUnitId", adUnitId);
+                            data.put("source", "preloader");
+                            fireEvent("on.rewardedInter.preload.exhausted", data);
+                        } catch (JSONException ignored) {}
                     }
                 };
 
@@ -153,7 +165,8 @@ public class RewardedInterstitialPreloadExecutor {
                     JSONObject data = new JSONObject();
                     data.put("amount", rewardItem.getAmount());
                     data.put("type", rewardItem.getType());
-                    fireEvent("on.rewardedinterstitial.reward", data);
+                    data.put("source", "preloader");
+                    fireEvent("on.rewardedInter.earned", data);
                 } catch (JSONException ignored) {}
             });
 
@@ -194,17 +207,29 @@ public class RewardedInterstitialPreloadExecutor {
         ad.setAdEventCallback(new RewardedInterstitialAdEventCallback() {
             @Override
             public void onAdImpression() {
-                fireEvent("on.rewardedinterstitial.impression", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewardedInter.impression", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdShowedFullScreenContent() {
-                fireEvent("on.rewardedinterstitial.opened", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewardedInter.shown", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
             public void onAdDismissedFullScreenContent() {
-                fireEvent("on.rewardedinterstitial.closed", null);
+                try {
+                    JSONObject data = new JSONObject();
+                    data.put("source", "preloader");
+                    fireEvent("on.rewardedInter.dismissed", data);
+                } catch (JSONException ignored) {}
             }
 
             @Override
@@ -213,7 +238,8 @@ public class RewardedInterstitialPreloadExecutor {
                     JSONObject errData = new JSONObject();
                     errData.put("message", error.getMessage());
                     errData.put("code", error.getCode());
-                    fireEvent("on.rewardedinterstitial.failed.show", errData);
+                    errData.put("source", "preloader");
+                    fireEvent("on.rewardedInter.failed.show", errData);
                 } catch (JSONException ignored) {}
             }
 
@@ -225,7 +251,7 @@ public class RewardedInterstitialPreloadExecutor {
                     data.put("currency", adValue.getCurrencyCode());
                     data.put("precision", adValue.getPrecisionType());
                     data.put("source", "preloader");
-                    fireEvent("on.rewardedinterstitial.revenue", data);
+                    fireEvent("on.rewardedInter.revenue", data);
                 } catch (JSONException ignored) {}
             }
         });
