@@ -52,7 +52,7 @@ public class InterstitialPreloadExecutor {
             String adUnitId = options.getString("adUnitId");
 
             if (isPreloaderActive && adUnitId.equals(currentAdUnitId)) {
-                callbackContext.success("Interstitial Preloader already active");
+                if (callbackContext != null) callbackContext.success("Interstitial Preloader already active");
                 return;
             }
 
@@ -62,7 +62,15 @@ public class InterstitialPreloadExecutor {
 
             int bufferSize = 1; 
             if (options.has("bufferSize")) {
-                bufferSize = options.getInt("bufferSize");
+                int requestedSize = options.getInt("bufferSize");
+
+                bufferSize = Math.max(1, Math.min(requestedSize, 3));
+
+                if (requestedSize > 3) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") exceeds the maximum safe limit. Automatically clamped to 3 to prevent OOM and AdMob policy violations.");
+                } else if (requestedSize < 1) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") is invalid. Automatically clamped to 1.");
+                }
             }
 
             if (options.has("isAutoShow")) {
@@ -85,7 +93,7 @@ public class InterstitialPreloadExecutor {
                             JSONObject data = new JSONObject();
                             data.put("adUnitId", adUnitId);
                             data.put("source", "preloader");
-                            fireEvent("on.interstitial.preload.available", data);
+                            fireEvent("on.interstitial.loaded", data);
                         } catch (JSONException ignored) {}
 
                         if (isAutoShow) {
@@ -124,24 +132,30 @@ public class InterstitialPreloadExecutor {
                 };
 
                 InterstitialAdPreloader.start(adUnitId, preloadConfig, preloadCallback);
-                callbackContext.success("Interstitial Preloader Started");
+                if (callbackContext != null) {
+                    callbackContext.success("Interstitial Preloader Started");
+                }
             });
 
         } catch (JSONException e) {
             isPreloaderActive = false;
-            callbackContext.error("Invalid arguments: " + e.getMessage());
+            if (callbackContext != null) {
+                callbackContext.error("Invalid arguments: " + e.getMessage());
+            }
         }
     }
 
     public void showPolledAd(JSONArray args, CallbackContext callbackContext) {
         if (currentAdUnitId == null || currentAdUnitId.isEmpty() || !isPreloaderActive) {
-            callbackContext.error("Interstitial Preloader engine is not running.");
+            if (callbackContext != null) {
+                callbackContext.error("Interstitial Preloader engine is not running.");
+            }
             return;
         }
 
         long currentTime = new Date().getTime();
         if ((currentTime - lastShowTime) < minShowInterval) {
-            callbackContext.error("Request too fast. Please wait " + minShowInterval + " ms to prevent invalid traffic.");
+            if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + minShowInterval + " ms to prevent invalid traffic.");
             return;
         }
 
@@ -150,27 +164,30 @@ public class InterstitialPreloadExecutor {
             final InterstitialAd ad = InterstitialAdPreloader.pollAd(currentAdUnitId);
 
             if (ad == null) {
-                callbackContext.error("Interstitial Pool Empty");
+                if (callbackContext != null) callbackContext.error("Interstitial Pool Empty");
                 return;
             }
 
             this.lastShowTime = currentTime;
             setupAdEvents(ad);
             ad.show(cordova.getActivity());
-
-            callbackContext.success("Interstitial Ad Shown from Pool");
+            if (callbackContext != null){
+                callbackContext.success("Interstitial Ad Shown from Pool");
+            }
         });
     }
 
     public void checkAdAvailable(JSONArray args, CallbackContext callbackContext) {
         if (currentAdUnitId == null || currentAdUnitId.isEmpty()) {
-            callbackContext.success(0); 
+            if (callbackContext != null) callbackContext.success(0); 
             return;
         }
 
         cordova.getActivity().runOnUiThread(() -> {
             boolean isAvailable = InterstitialAdPreloader.isAdAvailable(currentAdUnitId);
-            callbackContext.success(isAvailable ? 1 : 0);
+            if (callbackContext != null) {
+                callbackContext.success(isAvailable ? 1 : 0);
+            }
         });
     }
 
@@ -211,7 +228,7 @@ public class InterstitialPreloadExecutor {
                 try {
                     JSONObject data = new JSONObject();
                     data.put("source", "preloader");
-                    fireEvent("on.interstitial.opened", data);
+                    fireEvent("on.interstitial.shown", data);
                 } catch (JSONException ignored) {}
             }
 
@@ -220,7 +237,7 @@ public class InterstitialPreloadExecutor {
                 try {
                     JSONObject data = new JSONObject();
                     data.put("source", "preloader");
-                    fireEvent("on.interstitial.closed", data);
+                    fireEvent("on.interstitial.dismissed", data);
                 } catch (JSONException ignored) {}
 
             }

@@ -15,8 +15,6 @@ import com.google.android.libraries.ads.mobile.sdk.common.LoadAdError;
 import com.google.android.libraries.ads.mobile.sdk.common.PreloadCallback;
 import com.google.android.libraries.ads.mobile.sdk.common.PreloadConfiguration;
 import com.google.android.libraries.ads.mobile.sdk.common.ResponseInfo;
-import com.google.android.libraries.ads.mobile.sdk.rewarded.RewardItem;
-import com.google.android.libraries.ads.mobile.sdk.rewarded.OnUserEarnedRewardListener;
 import com.google.android.libraries.ads.mobile.sdk.rewarded.RewardedAd;
 import com.google.android.libraries.ads.mobile.sdk.rewarded.RewardedAdEventCallback;
 import com.google.android.libraries.ads.mobile.sdk.rewarded.RewardedAdPreloader;
@@ -58,7 +56,7 @@ public class RewardedPreloadExecutor {
             String adUnitId = options.getString("adUnitId");
 
             if (isPreloaderActive && adUnitId.equals(currentAdUnitId)) {
-                callbackContext.success("Rewarded Preloader already active");
+                if (callbackContext != null) callbackContext.success("Rewarded Preloader already active");
                 return;
             }
 
@@ -69,9 +67,17 @@ public class RewardedPreloadExecutor {
                 this.isAutoShow = options.getBoolean("isAutoShow");
             }
 
-            int bufferSize = 1;
+            int bufferSize = 1; 
             if (options.has("bufferSize")) {
-                bufferSize = options.getInt("bufferSize");
+                int requestedSize = options.getInt("bufferSize");
+
+                bufferSize = Math.max(1, Math.min(requestedSize, 3));
+
+                if (requestedSize > 3) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") exceeds the maximum safe limit. Automatically clamped to 3 to prevent OOM and AdMob policy violations.");
+                } else if (requestedSize < 1) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") is invalid. Automatically clamped to 1.");
+                }
             }
 
             this.currentAdUnitId = adUnitId;
@@ -126,12 +132,14 @@ public class RewardedPreloadExecutor {
                 };
 
                 RewardedAdPreloader.start(adUnitId, preloadConfig, preloadCallback);
-                callbackContext.success("Rewarded Preloader Started");
+                if (callbackContext != null) {
+                    callbackContext.success("Rewarded Preloader Started");
+                }
             });
 
         } catch (JSONException e) {
             isPreloaderActive = false;
-            callbackContext.error("Invalid arguments: " + e.getMessage());
+            if (callbackContext != null) callbackContext.error("Invalid arguments: " + e.getMessage());
         }
     }
 
@@ -159,28 +167,39 @@ public class RewardedPreloadExecutor {
             setupAdEvents(ad);
 
             ad.show(cordova.getActivity(), rewardItem -> {
-                try {
-                    JSONObject data = new JSONObject();
-                    data.put("amount", rewardItem.getAmount());
-                    data.put("type", rewardItem.getType());
-                    data.put("source", "preloader");
-                    fireEvent("on.rewarded.earned", data);
-                } catch (JSONException ignored) {}
-            });
 
-            if (callbackContext != null) callbackContext.success("Rewarded Ad Shown from Pool");
+                cordova.getActivity().runOnUiThread(() -> {
+                    try {
+                        JSONObject data = new JSONObject();
+                        data.put("amount", rewardItem.getAmount());
+                        data.put("type", rewardItem.getType());
+                        data.put("source", "preloader");
+
+                        fireEvent("on.rewarded.earned", data);
+
+                    } catch (JSONException ignored) {
+                    }
+                });
+            });
+            if (callbackContext != null){
+                callbackContext.success("Rewarded Ad Shown from Pool");
+            }
         });
     }
 
     public void checkAdAvailable(JSONArray args, CallbackContext callbackContext) {
         if (currentAdUnitId == null || currentAdUnitId.isEmpty()) {
-            callbackContext.success(0);
+            if (callbackContext != null) {
+                callbackContext.success(0);
+            }
             return;
         }
 
         cordova.getActivity().runOnUiThread(() -> {
             boolean isAvailable = RewardedAdPreloader.isAdAvailable(currentAdUnitId);
-            callbackContext.success(isAvailable ? 1 : 0);
+            if (callbackContext != null) {
+                callbackContext.success(isAvailable ? 1 : 0);
+            }
         });
     }
 

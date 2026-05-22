@@ -12,25 +12,24 @@ PORTRAIT_INLINE_ADAPTIVE
 function createBannerAds() {
     if (isDeviceready) {
         if (window.logToScreen) window.logToScreen("Creating Banner Ad...");
+
+        // Grab values dynamically from UI
+        var selectedPosition = document.getElementById('banner-preload-pos').value;
+        var isOverlappingSelected = document.getElementById('banner-preload-overlap').checked;
+        var isCollapsibleSelected = document.getElementById('banner-preload-collapse').checked;
+        var isAutoShowSelected = document.getElementById('banner-preload-autoshow').checked;
+
         admobNextGen.createBanner({
             adUnitId: Banner_ID,
-            position: 'bottom',       // 'top' or 'bottom'
-            size: 'ADAPTIVE',         // 'BANNER', 'LARGE_BANNER', 'MEDIUM_RECTANGLE', 'ADAPTIVE', 'FULL_BANNER', 'LEADERBOARD'
-            isOverlapping: false,     // true = Overlay, false = Push Webview
-            collapsible: true,        // true = Enable Collapsible Format (High Revenue)
+            position: selectedPosition, // 'top' or 'bottom'
+            size: 'ADAPTIVE',  // 'BANNER', 'LARGE_BANNER', 'MEDIUM_RECTANGLE', 'ADAPTIVE', 'FULL_BANNER', 'LEADERBOARD'
+            isOverlapping: isOverlappingSelected,     // true = Overlay, false = Push Webview
+            collapsible: isCollapsibleSelected,       // true = Enable Collapsible Format (High Revenue)
             retryInterval: 5000,      // Anti-spam delay (ms)
-            isAutoShow: true
+            isAutoShow: isAutoShowSelected
         });
     }
 }
-
-/* fastest, banner ads will appear very quickly.
-https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main#5-ad-preloading-banner---android-only
-admobNextGen.startBannerPreload({config})
-admobNextGen.showPreloadedBanner()
-admobNextGen.hideBannerPreload() // hide
-admobNextGen.stopBannerPreload() // remove
-*/
 
 function showBannerAds() {
     if (isDeviceready) {

@@ -84,7 +84,7 @@ public class AppOpenAdPreloadExecutor {
 
             if ((currentTime - lastLoadTime) < retryInterval) {
                 if (callbackContext != null) {
-                    callbackContext.success("Preload request debounced.");
+                    callbackContext.error("Request too fast. Please wait " + retryInterval + " ms to prevent invalid traffic.");
                 }
                 return;
             }

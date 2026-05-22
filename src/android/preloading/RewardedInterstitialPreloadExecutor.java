@@ -50,7 +50,7 @@ public class RewardedInterstitialPreloadExecutor {
     public void startPreload(JSONArray args, CallbackContext callbackContext) {
 
         if (!isInitialized) {
-            callbackContext.error("SDK not initialized");
+            if (callbackContext != null) callbackContext.error("SDK not initialized");
 
             return;
         }
@@ -60,7 +60,7 @@ public class RewardedInterstitialPreloadExecutor {
             String adUnitId = options.getString("adUnitId");
 
             if (isPreloaderActive && adUnitId.equals(currentAdUnitId)) {
-                callbackContext.success("Rewarded Interstitial Preloader already active");
+                if (callbackContext != null) callbackContext.success("Rewarded Interstitial Preloader already active");
                 return;
             }
 
@@ -71,9 +71,17 @@ public class RewardedInterstitialPreloadExecutor {
                 this.isAutoShow = options.getBoolean("isAutoShow");
             }
 
-            int bufferSize = 1;
+            int bufferSize = 1; 
             if (options.has("bufferSize")) {
-                bufferSize = options.getInt("bufferSize");
+                int requestedSize = options.getInt("bufferSize");
+
+                bufferSize = Math.max(1, Math.min(requestedSize, 3));
+
+                if (requestedSize > 3) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") exceeds the maximum safe limit. Automatically clamped to 3 to prevent OOM and AdMob policy violations.");
+                } else if (requestedSize < 1) {
+                    if (callbackContext != null) callbackContext.error("WARNING: Requested bufferSize (" + requestedSize + ") is invalid. Automatically clamped to 1.");
+                }
             }
 
             this.currentAdUnitId = adUnitId;
@@ -93,7 +101,8 @@ public class RewardedInterstitialPreloadExecutor {
                             data.put("adUnitId", adUnitId);
                             data.put("source", "preloader");
                             fireEvent("on.rewardedInter.loaded", data);
-                        } catch (JSONException ignored) {}
+                        } catch (JSONException ignored) {
+                        }
 
                         if (isAutoShow) {
                             new Handler(Looper.getMainLooper()).post(() -> {
@@ -112,7 +121,8 @@ public class RewardedInterstitialPreloadExecutor {
                             err.put("adUnitId", adUnitId);
                             err.put("source", "preloader");
                             fireEvent("on.rewardedInter.failed.load", err);
-                        } catch (JSONException ignored) {}
+                        } catch (JSONException ignored) {
+                        }
                     }
 
                     @Override
@@ -123,17 +133,20 @@ public class RewardedInterstitialPreloadExecutor {
                             data.put("adUnitId", adUnitId);
                             data.put("source", "preloader");
                             fireEvent("on.rewardedInter.preload.exhausted", data);
-                        } catch (JSONException ignored) {}
+                        } catch (JSONException ignored) {
+                        }
                     }
                 };
 
                 RewardedInterstitialAdPreloader.start(adUnitId, preloadConfig, preloadCallback);
-                callbackContext.success("Rewarded Interstitial Preloader Started");
+                if (callbackContext != null){
+                    callbackContext.success("Rewarded Interstitial Preloader Started");
+                }
             });
 
         } catch (JSONException e) {
             isPreloaderActive = false;
-            callbackContext.error("Invalid arguments: " + e.getMessage());
+            if (callbackContext != null) callbackContext.error("Invalid arguments: " + e.getMessage());
         }
     }
 
@@ -161,6 +174,7 @@ public class RewardedInterstitialPreloadExecutor {
             setupAdEvents(ad);
 
             ad.show(cordova.getActivity(), rewardItem -> {
+                cordova.getActivity().runOnUiThread(() -> {
                 try {
                     JSONObject data = new JSONObject();
                     data.put("amount", rewardItem.getAmount());
@@ -168,6 +182,7 @@ public class RewardedInterstitialPreloadExecutor {
                     data.put("source", "preloader");
                     fireEvent("on.rewardedInter.earned", data);
                 } catch (JSONException ignored) {}
+                });
             });
 
             if (callbackContext != null) callbackContext.success("Rewarded Interstitial Ad Shown from Pool");
@@ -176,13 +191,17 @@ public class RewardedInterstitialPreloadExecutor {
 
     public void checkAdAvailable(JSONArray args, CallbackContext callbackContext) {
         if (currentAdUnitId == null || currentAdUnitId.isEmpty()) {
-            callbackContext.success(0);
+            if (callbackContext != null){
+                callbackContext.success(0);
+            }
             return;
         }
 
         cordova.getActivity().runOnUiThread(() -> {
             boolean isAvailable = RewardedInterstitialAdPreloader.isAdAvailable(currentAdUnitId);
-            callbackContext.success(isAvailable ? 1 : 0);
+            if (callbackContext != null) {
+                callbackContext.success(isAvailable ? 1 : 0);
+            }
         });
     }
 

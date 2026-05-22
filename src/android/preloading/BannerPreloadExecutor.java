@@ -66,6 +66,7 @@ public class BannerPreloadExecutor {
 
     private long lastShowTime = 0;
     private long minShowInterval = 5000;
+    private boolean isAutoShow = false;
 
     public BannerPreloadExecutor(CordovaInterface cordova, CordovaWebView webView) {
         this.cordova = cordova;
@@ -82,7 +83,7 @@ public class BannerPreloadExecutor {
             String adUnitId = options.getString("adUnitId");
 
             if (isPreloaderActive && adUnitId.equals(currentAdUnitId)) {
-                callbackContext.success("Preloader already active");
+                if (callbackContext != null) callbackContext.success("Preloader already active");
                 return;
             }
 
@@ -96,6 +97,7 @@ public class BannerPreloadExecutor {
             if (options.has("isCordova15")) this.isCordova15 = options.getBoolean("isCordova15");
 
             if (options.has("retryInterval")) this.minShowInterval = options.getLong("retryInterval");
+            if (options.has("isAutoShow")) this.isAutoShow = options.getBoolean("isAutoShow");
 
             String requestedSize = "ADAPTIVE";
             if (options.has("size")) requestedSize = options.getString("size");
@@ -128,8 +130,16 @@ public class BannerPreloadExecutor {
                 PreloadCallback preloadCallback = new PreloadCallback() {
                     @Override
                     public void onAdPreloaded(@NonNull String preloadId, @NonNull ResponseInfo responseInfo) {
+                        if (isAutoShow) {
+
+                            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+
+                                showPolledAd(null, null);
+                            });
+                        }
                         fireEvent("on.banner.preload.available", null);
                     }
+
                     @Override
                     public void onAdFailedToPreload(@NonNull String preloadId, @NonNull LoadAdError loadAdError) {
                         try {
@@ -140,23 +150,29 @@ public class BannerPreloadExecutor {
                     }
                     @Override
                     public void onAdsExhausted(@NonNull String preloadId) {
-                        fireEvent("on.preload.exhausted", null);
+                        fireEvent("on.banner.preload.exhausted", null);
                     }
                 };
 
                 BannerAdPreloader.start(adUnitId, preloadConfig, preloadCallback);
-                callbackContext.success("Preloader Started");
+                if (callbackContext != null) {
+                    callbackContext.success("Preloader Started");
+                }
             });
 
         } catch (JSONException e) {
             isPreloaderActive = false;
-            callbackContext.error(e.getMessage());
+            if (callbackContext != null) {
+                callbackContext.error(e.getMessage());
+            }
         }
     }
 
     public void showPolledAd(JSONArray args, CallbackContext callbackContext) {
         if (currentAdUnitId == null || currentAdUnitId.isEmpty()) {
-            callbackContext.error("Preloader engine is not running.");
+            if (callbackContext != null) {
+                callbackContext.error("Preloader engine is not running.");
+            }
             return;
         }
 
@@ -178,7 +194,9 @@ public class BannerPreloadExecutor {
 
             if (isBannerVisible) {
                 if (isSamePos && isSameOverlap) {
-                    callbackContext.success("Banner Already Visible (Flicker Prevented)");
+                    if (callbackContext != null) {
+                        callbackContext.success("Banner Already Visible");
+                    }
                     return;
                 } else {
                     this.currentPosition = newPosition;
@@ -187,7 +205,9 @@ public class BannerPreloadExecutor {
                     cordova.getActivity().runOnUiThread(() -> {
                         updateBannerLayout();
                         updateWebViewMargins();
-                        callbackContext.success("Banner Repositioned");
+                        if (callbackContext != null) {
+                            callbackContext.success("Banner Repositioned");
+                        }
                     });
                     return;
                 }
@@ -198,7 +218,9 @@ public class BannerPreloadExecutor {
 
                 cordova.getActivity().runOnUiThread(() -> {
                     showBannerView();
-                    callbackContext.success("Banner Unhidden (Restored from hidden state)");
+                    if (callbackContext != null) {
+                        callbackContext.success("Banner Unhidden (Restored from hidden state)");
+                    }
                 });
                 return;
             }
@@ -206,7 +228,9 @@ public class BannerPreloadExecutor {
 
         long currentTime = new Date().getTime();
         if ((currentTime - lastShowTime) < minShowInterval) {
-            callbackContext.error("Request too fast. Please wait " + minShowInterval + " ms to prevent invalid traffic.");
+            if (callbackContext != null) {
+                callbackContext.error("Request too fast. Please wait " + minShowInterval + " ms to prevent invalid traffic.");
+            }
             return;
         }
 
@@ -218,7 +242,7 @@ public class BannerPreloadExecutor {
             BannerAd ad = BannerAdPreloader.pollAd(currentAdUnitId);
 
             if (ad == null) {
-                callbackContext.error("Pool Empty");
+                if (callbackContext != null) callbackContext.error("Pool Empty");
                 return;
             }
 
@@ -240,7 +264,10 @@ public class BannerPreloadExecutor {
 
             sendLoadedEvent(ad.getAdSize(), ad.isCollapsible());
 
-            callbackContext.success("Ad Shown from Pool");
+            if (callbackContext != null) {
+                callbackContext.success("Ad Shown from Pool");
+            }
+
         });
     }
 
@@ -524,7 +551,13 @@ public class BannerPreloadExecutor {
     }
 
     private void hideBannerView() {
+        if (!isBannerVisible) {
+            return; 
+        }
+
         isBannerVisible = false;
+
+        isAutoShow = false;
 
         if (isCapacitor) {
             if (capacitorAdLayout != null) capacitorAdLayout.setVisibility(View.GONE);
@@ -536,12 +569,16 @@ public class BannerPreloadExecutor {
             View adView = currentBannerAd.getView(cordova.getActivity());
             if (adView != null) adView.setVisibility(View.GONE);
         }
-        updateWebViewMargins();
+
+        if (!isOverlapping) {
+            updateWebViewMargins();
+        }
     }
 
     private void destroyCurrentBanner() {
         if (currentBannerAd != null) {
             isBannerVisible = false;
+            isAutoShow = false;
             updateWebViewMargins();
 
             View adView = currentBannerAd.getView(cordova.getActivity());

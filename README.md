@@ -107,6 +107,17 @@ This plugin prioritizes the safety of your AdMob account and the stability of yo
 > Fastest test (APK Debug): **[⚡ With github action ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/discussions/4)** (Optional)
 ---
 
+### 📦 Current SDK Versions (Maintained & Up-to-Date)
+
+This plugin is regularly updated to support the latest standards.
+
+| Component | Platform | Version | Release Notes |
+| :--- | :--- | :--- | :--- |
+| **GMA Next-Gen SDK** | Android | **1.1.0** | [View Notes](https://developers.google.com/admob/android/next-gen/rel-notes) |
+| **UMP SDK** | Android | **4.0.0** | [View Notes](https://developers.google.com/admob/android/privacy/release-notes) |
+| **Mobile Ads SDK** | iOS | **13.3.0** | [View Notes](https://developers.google.com/admob/ios/rel-notes) |
+| **UMP SDK** | iOS | **3.1.0** | [View Notes](https://developers.google.com/ad-manager/mobile-ads-sdk/ios/privacy/download) |
+
 ### 🎉 View all plugin release notes
 - 👉 [**Releases notes**](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/releases)
 
@@ -350,57 +361,6 @@ High-performance native templates.
 
 ---
 
-## 5. Ad Preloading (Banner) - Android Only
-
-Use the background engine to pool ads for 0ms latency.
-
-### Usage
-
-    // 1. Start Engine
-    admobNextGen.startBannerPreload({
-        adUnitId: 'ca-app-pub-xxx/xxx',
-        size: 'ADAPTIVE',     // 'BANNER', 'LARGE_BANNER', 'MEDIUM_RECTANGLE', 'ADAPTIVE', 'FULL_BANNER', 'LEADERBOARD'
-        position: 'bottom',   // 'top' or 'bottom'
-        collapsible: false,   // true = Enable Collapsible Format (High Revenue)
-        isOverlapping: false, 
-        retryInterval: 5000   // Anti-spam delay (ms)
-    });
-
-    // 2. Show Instantly (from pool)
-    admobNextGen.showPreloadedBanner();
-
-    // 3. Stop/Remove Engine
-    admobNextGen.stopBannerPreload();
-
-    // 4. Hide Engine
-    admobNextGen.hideBannerPreload() 
-
-
-    ### Banner Events
-
-    document.addEventListener('on.banner.load', (data) => {
-        console.log("Banner Loaded: " + data.width + "x" + data.height);
-        console.log("Collapsible: " + data.isCollapsible);
-    });
-    document.addEventListener('on.preload.failed', (err) => console.error(err));
-    document.addEventListener('on.banner.revenue', (data) => {
-        console.log("Revenue: " + data.value + " " + data.currency);
-    });
-    document.addEventListener('on.banner.clicked', () => console.log("Clicked"));
-    document.addEventListener('on.banner.impression', () => console.log("Impression"));
-
-    // else
-    on.preload.available
-    on.preload.failed
-    on.preload.exhausted
-    on.banner.opened
-    on.banner.closed
-    on.banner.failed.show
-    on.banner.refreshed
-    on.banner.refresh.failed
-
----
-
 ## 6. App Open Ads
 
 Supports Auto-Resume logic.
@@ -416,9 +376,6 @@ Supports Auto-Resume logic.
 ### Manual Show
 
     admobNextGen.showAppOpenAd();
-
-### With App Open Ad Preload
-> App Open Ad Preload **[⚡ Modern ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main/simple-example/www/js/AppOpenAdPreload.js)** 
 
 ### App Open Events
 
@@ -535,6 +492,83 @@ Auto-showing rewarded format (no opt-in).
 
 
 ---
+
+
+## 10. Preloader Engine (Android Only - Next-Gen SDK)
+
+The AdMob Next-Gen SDK introduces a powerful background Preloader Engine that caches ads in a buffer pool, enabling zero-latency ad rendering.
+
+> **⚠️ IMPORTANT WARNING & BEST PRACTICES:**
+> * **Android Only:** The Preloader engine is currently an exclusive feature of the Android Next-Gen SDK.
+> * **Strict Method Separation:** NEVER mix Classic methods with Preloader methods to avoid logic conflicts. 
+>   * If you use `createBanner`, you MUST use `showBanner`. 
+>   * If you use `startBannerPreload`, you MUST use `showPreloadedBanner`.
+> * **Cross-Platform (iOS) Consideration:** Events are unified. A `source` flag (`data.source === "preloader"`) is injected into the event data on Android. However, it is highly recommended to maintain a single unified logic flow. Relying strictly on the `source === "preloader"` condition will cause issues on iOS, as iOS relies entirely on the Classic implementation.
+
+### Method Mapping (Classic vs Preloader)
+
+| Ad Format | Start Preload | Show Polled Ad | Other Preload Methods |
+| :--- | :--- | :--- | :--- |
+| **Banner** | `startBannerPreload(obj)` | `showPreloadedBanner()` | `stopBannerPreload()`, `hideBannerPreload()` |
+| **App Open** | `startAppOpenPreload(obj)` | `showPreloadedAppOpenAd()` | `isAppOpenAdAvailable()` |
+| **Interstitial** | `startInterstitialPreload(obj)` | `showPreloadedInterstitial()` | `stopInterstitialPreload()`, `isInterstitialAdAvailable()` |
+| **Rewarded** | `startRewardedPreload(obj)` | `showPreloadedRewarded()` | `stopRewardedPreload()`, `isRewardedAdAvailable()` |
+| **Rewarded Interstitial** | `startRewardedInterstitialPreload(obj)` | `showPreloadedRewardedInterstitial()` | `stopRewardedInterstitialPreload()`, `isRewardedInterstitialAdAvailable()` |
+
+### Implementation Example
+
+- [⚡ Example preloading ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/tree/main/simple-example/www/js/preloading)
+
+**1. Start the Preloader**
+Run this once (e.g., after SDK initialization). The engine will automatically maintain the buffer in the background.
+
+```javascript
+admobNextGen.startRewardedPreload({
+    adUnitId: 'ca-app-pub-xxx/xxx',
+    bufferSize: 2,         // (Optional) Number of ads to cache. Default: 1 max 3
+    isAutoShow: false,     // (Optional) Show immediately when the first ad is ready
+    retryInterval: 5000    // (Optional) Anti-spam protection in ms
+});
+```
+
+**2. Show the Preloaded Ad**
+Call this when the user interacts with your app. It will render instantly from the local buffer.
+
+```javascript
+admobNextGen.showPreloadedRewarded();
+```
+
+### Unified Events & Preloader Exclusives
+
+To streamline development, the Preloader triggers the **exact same lifecycle events** as the Classic mode (e.g., `on.rewarded.loaded`, `on.rewarded.dismissed`). You only need to write one event listener for both modes.
+
+**Preloader Exclusive Event:**
+The only event strictly unique to the Preloader is the `exhausted` event. This fires when the buffer pool is completely empty and the SDK stops trying to fetch new ads.
+
+```javascript
+// Example: Unique Preloader Event
+document.addEventListener('on.rewarded.exhausted', () => {
+    console.warn("Background ad buffer is empty!");
+});
+```
+
+**Optional: Checking the Event Source**
+If you need to execute specific conditional logic for the preloader, you can check `data.source`. *(Remember: This flag is Android-only).*
+
+```javascript
+document.addEventListener('on.rewarded.loaded', (e) => {
+    let data = e.data || e;
+    
+    if (data && data.source === "preloader") {
+        console.log("Ad loaded via Android Preloader Engine");
+    } else {
+        console.log("Ad loaded via Classic Engine (or iOS)");
+    }
+});
+```
+
+---
+
 
 ## ⚖️ Revenue Policy
 
