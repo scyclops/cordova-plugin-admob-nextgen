@@ -33,5 +33,5 @@ document.addEventListener('on.appopen.preload.exhausted', (e) => {
 
 // Other events are the same as the classic method.
 
-// Note: https://github.com/swaplab-engine/cordova-plugin-admob-nextgen/main/README.md#10-preloader-engine-android-only---next-gen-sdk
+// Note: https://github.com/swaplab-engine/cordova-plugin-admob-nextgen#10-preloader-engine-android-only---next-gen-sdk
 
