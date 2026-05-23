@@ -305,43 +305,59 @@ public class NativeExecutor {
 
         newNativeAdView.setLayoutParams(params);
 
+        newNativeAdView.setBackgroundColor(Color.WHITE);
+        newNativeAdView.setElevation(8f);
+
+        newNativeAdView.setPadding((int)(10*density), (int)(10*density), (int)(10*density), (int)(10*density));
+
         LinearLayout mainLayout = new LinearLayout(cordova.getActivity());
         mainLayout.setOrientation(LinearLayout.VERTICAL);
-        mainLayout.setBackgroundColor(Color.WHITE);
-        mainLayout.setElevation(8f);
-        mainLayout.setPadding((int)(10*density), (int)(10*density), (int)(10*density), (int)(10*density));
 
         LinearLayout headerLayout = new LinearLayout(cordova.getActivity());
         headerLayout.setOrientation(LinearLayout.HORIZONTAL);
         headerLayout.setGravity(Gravity.CENTER_VERTICAL);
 
+        headerLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         ImageView iconView = new ImageView(cordova.getActivity());
         if (nativeAd.getIcon() != null) {
             iconView.setImageDrawable(nativeAd.getIcon().getDrawable());
-            headerLayout.addView(iconView, new LinearLayout.LayoutParams((int)(40*density), (int)(40*density)));
+
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(
+                    (int)(40*density), (int)(40*density));
+            iconParams.setMargins(0, 0, (int)(8*density), 0); 
+            headerLayout.addView(iconView, iconParams);
         }
 
         LinearLayout textContainer = new LinearLayout(cordova.getActivity());
         textContainer.setOrientation(LinearLayout.VERTICAL);
-        textContainer.setPadding((int)(10*density), 0, 0, 0);
+
+        LinearLayout.LayoutParams textContainerParams = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
 
         TextView headlineView = new TextView(cordova.getActivity());
         headlineView.setText(nativeAd.getHeadline());
         headlineView.setTypeface(null, Typeface.BOLD);
         headlineView.setTextColor(Color.BLACK);
         headlineView.setMaxLines(1);
-        headlineView.setEllipsize(TextUtils.TruncateAt.END);
+        headlineView.setEllipsize(TextUtils.TruncateAt.END); 
         textContainer.addView(headlineView);
 
         TextView adBadge = new TextView(cordova.getActivity());
         adBadge.setText("Ad");
         adBadge.setTextSize(10);
         adBadge.setTextColor(Color.WHITE);
-        adBadge.setBackgroundColor(0xFFFCC133);
+        adBadge.setBackgroundColor(0xFFFCC133); 
         adBadge.setPadding(5, 0, 5, 0);
-        textContainer.addView(adBadge, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        headerLayout.addView(textContainer);
+        LinearLayout.LayoutParams badgeParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        badgeParams.topMargin = (int)(2*density); 
+        textContainer.addView(adBadge, badgeParams);
+
+        headerLayout.addView(textContainer, textContainerParams);
+
         mainLayout.addView(headerLayout);
 
         MediaView mediaView = new MediaView(cordova.getActivity());
