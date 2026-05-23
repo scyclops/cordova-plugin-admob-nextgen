@@ -96,7 +96,9 @@ public class AdMobNextGen extends CordovaPlugin {
         }
 
         if ("requestConsentInfo".equals(action)) {
-            consentExecutor.requestConsentInfo(args, callbackContext);
+            cordova.getThreadPool().execute(() -> {
+                consentExecutor.requestConsentInfo(args, callbackContext);
+            });
             return true;
         }
         if ("showPrivacyOptionsForm".equals(action)) {
@@ -113,7 +115,9 @@ public class AdMobNextGen extends CordovaPlugin {
         }
 
         if ("initialize".equals(action)) {
-            this.initializeSDK(args, callbackContext);
+            cordova.getThreadPool().execute(() -> {
+                this.initializeSDK(args, callbackContext);
+            });
             return true;
         }
 
@@ -313,7 +317,6 @@ public class AdMobNextGen extends CordovaPlugin {
         return;
     }
 
-    cordova.getThreadPool().execute(() -> {
         try {
             InitializationConfig.Builder initConfigBuilder = new InitializationConfig.Builder(appId);
 
@@ -345,7 +348,6 @@ public class AdMobNextGen extends CordovaPlugin {
         } catch (Exception e) {
             cordova.getActivity().runOnUiThread(() -> callbackContext.error(e.getMessage()));
         }
-    });
 }
 
     private String getAppIdFromManifest() {

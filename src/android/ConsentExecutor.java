@@ -39,7 +39,6 @@ public class ConsentExecutor {
     }
 
     public void requestConsentInfo(JSONArray args, CallbackContext callbackContext) {
-        cordova.getThreadPool().execute(() -> {
             try {
                 JSONObject options = args.optJSONObject(0);
 
@@ -122,7 +121,6 @@ public class ConsentExecutor {
             } catch (Exception e) {
                 callbackContext.error("Exception: " + e.getMessage());
             }
-        });
     }
 
     public void getTCData(CallbackContext callbackContext) {
