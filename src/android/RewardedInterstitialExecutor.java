@@ -67,6 +67,15 @@ public class RewardedInterstitialExecutor {
                 return;
             }
 
+            if (mRewardedInterstitialAd != null) {
+
+                fireEvent("on.rewardedInter.loaded", null);
+                if (callbackContext != null) {
+                    callbackContext.success("Ad already loaded");
+                }
+                return;
+            }
+
             if ((currentTime - lastLoadTime) < minLoadInterval) {
 
                 if (callbackContext != null) callbackContext.error("Request too fast. Please wait " + minLoadInterval + " ms to prevent invalid traffic.");
@@ -109,8 +118,6 @@ public class RewardedInterstitialExecutor {
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         isLoading = false;
-
-                        mRewardedInterstitialAd = null;
 
                         try {
                             JSONObject err = new JSONObject();
@@ -156,12 +163,13 @@ public class RewardedInterstitialExecutor {
                     @Override
                     public void onAdDismissedFullScreenContent() {
 
+                        mRewardedInterstitialAd = null;
+
                         if (!isRewardEarned) {
                             fireEvent("on.rewardedInter.canceled", null);
                         }
 
                         fireEvent("on.rewardedInter.dismissed", null);
-                        mRewardedInterstitialAd = null;
                     }
 
                     @Override

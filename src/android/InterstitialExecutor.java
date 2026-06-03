@@ -80,6 +80,9 @@ public class InterstitialExecutor {
 
         if (interstitialAd != null) {
 
+            if (requestCallback != null) {
+                 requestCallback.success("Ad already loaded and ready"); 
+            }
             fireEvent("on.interstitial.loaded", null);
             return;
         }
@@ -117,7 +120,6 @@ public class InterstitialExecutor {
                         @Override
                         public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                             isLoading = false;
-                            interstitialAd = null;
 
                             try {
                                 JSONObject errData = new JSONObject();
