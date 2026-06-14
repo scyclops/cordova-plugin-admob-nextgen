@@ -11,7 +11,7 @@
 @property (nonatomic, strong) ConsentExecutor *consentExecutor;
 @property (nonatomic, strong) GlobalSettingsExecutor *globalSettingsExecutor;
 @property (nonatomic, strong) BannerExecutor *bannerExecutor;
-@property (nonatomic, strong) InterstitialExecutor *interstitialExecutor; 
+@property (nonatomic, strong) InterstitialExecutor *interstitialExecutor;
 @property (nonatomic, strong) RewardedExecutor *rewardedExecutor;
 @property (nonatomic, strong) RewardedInterstitialExecutor *rewardedInterstitialExecutor;
 @end
@@ -23,13 +23,47 @@
     self.consentExecutor = [[ConsentExecutor alloc] initWithPlugin:self];
     self.globalSettingsExecutor = [[GlobalSettingsExecutor alloc] initWithPlugin:self];
     self.bannerExecutor = [[BannerExecutor alloc] initWithPlugin:self];
-    self.interstitialExecutor = [[InterstitialExecutor alloc] initWithPlugin:self]; 
+    self.interstitialExecutor = [[InterstitialExecutor alloc] initWithPlugin:self];
     self.rewardedExecutor = [[RewardedExecutor alloc] initWithPlugin:self];
     [[AppOpenAdExecutor sharedInstance] initializeWithPlugin:self];
     self.rewardedInterstitialExecutor = [[RewardedInterstitialExecutor alloc] initWithPlugin:self];
 }
 
 - (void)initialize:(CDVInvokedUrlCommand*)command {
+    NSDictionary *options = nil;
+    if (command.arguments.count > 0 && [command.arguments objectAtIndex:0] != [NSNull null]) {
+        options = [command.arguments objectAtIndex:0];
+    }
+
+    if (options != nil && [options isKindOfClass:[NSDictionary class]]) {
+        GADRequestConfiguration *requestConfig = GADMobileAds.sharedInstance.requestConfiguration;
+
+        if (options[@"maxAdContentRating"]) {
+            NSString *rating = options[@"maxAdContentRating"];
+            if ([rating isEqualToString:@"G"]) {
+                requestConfig.maxAdContentRating = GADMaxAdContentRatingGeneral;
+            } else if ([rating isEqualToString:@"PG"]) {
+                requestConfig.maxAdContentRating = GADMaxAdContentRatingParentalGuidance;
+            } else if ([rating isEqualToString:@"T"]) {
+                requestConfig.maxAdContentRating = GADMaxAdContentRatingTeen;
+            } else if ([rating isEqualToString:@"MA"]) {
+                requestConfig.maxAdContentRating = GADMaxAdContentRatingMatureAudience;
+            } else {
+                requestConfig.maxAdContentRating = @"";
+            }
+        }
+
+        if (options[@"tagForChildDirectedTreatment"]) {
+            BOOL isChildDirected = [options[@"tagForChildDirectedTreatment"] boolValue];
+            requestConfig.tagForChildDirectedTreatment = @(isChildDirected);
+        }
+
+        if (options[@"tagForUnderAgeOfConsent"]) {
+            BOOL isUnderAge = [options[@"tagForUnderAgeOfConsent"] boolValue];
+            requestConfig.tagForUnderAgeOfConsent = @(isUnderAge);
+        }
+    }
+
     [self.commandDelegate runInBackground:^{
         [[GADMobileAds sharedInstance] startWithCompletionHandler:^(GADInitializationStatus * _Nonnull status) {
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Initialization complete."];

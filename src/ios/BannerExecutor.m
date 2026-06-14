@@ -59,7 +59,7 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-#pragma mark - Smart Window Helper (Diadopsi dari EmiBanner)
+#pragma mark - Smart Window Helper
 
 - (UIWindow *)getKeyWindow {
     UIWindow *window = nil;
