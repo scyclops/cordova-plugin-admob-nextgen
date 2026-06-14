@@ -18,6 +18,8 @@ It moves away from legacy implementations to modern `SurfaceControl`, optimized 
 > **Maintained by the original creator of [EMI-INDO/emi-indo-cordova-plugin-admob](https://github.com/EMI-INDO/emi-indo-cordova-plugin-admob).** This is not just an update; it is a brand new engine designed for 2026 and beyond.
 
 ---
+[(NEW) ⚡️ Next-Gen special capacitor](https://github.com/swaplab-engine/capacitor-admob-nextgen)**. 
+---
 
 ## 🚀 Why Next-Gen?
 
