@@ -276,9 +276,6 @@
       if (safeArea.top == 0 && screenH >= 812.0)
           safeArea.top = 44.0;
 
-      rootVC.view.backgroundColor = [UIColor blackColor];
-      webView.superview.backgroundColor = [UIColor blackColor];
-
       CGRect fullScreenRect = CGRectMake(0, 0, screenW, screenH);
 
       if (self.isBannerVisible && self.bannerView &&

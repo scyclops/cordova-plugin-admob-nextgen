@@ -8,6 +8,7 @@
 #import "RewardedInterstitialExecutor.h"
 
 @interface AdMobNextGen()
+@property (nonatomic, assign) BOOL isInitialized;
 @property (nonatomic, strong) ConsentExecutor *consentExecutor;
 @property (nonatomic, strong) GlobalSettingsExecutor *globalSettingsExecutor;
 @property (nonatomic, strong) BannerExecutor *bannerExecutor;
@@ -66,6 +67,7 @@
 
     [self.commandDelegate runInBackground:^{
         [[GADMobileAds sharedInstance] startWithCompletionHandler:^(GADInitializationStatus * _Nonnull status) {
+            self.isInitialized = YES; 
             CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Initialization complete."];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }];
@@ -119,6 +121,11 @@
 #pragma mark - Banner Routing
 
 - (void)createBanner:(CDVInvokedUrlCommand*)command {
+    if (!self.isInitialized) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"SDK not initialized. Call initialize() first."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil && [options isKindOfClass:[NSDictionary class]]) {
         [self.bannerExecutor createBanner:options command:command];
@@ -143,6 +150,11 @@
 #pragma mark - Interstitial Routing
 
 - (void)createInterstitial:(CDVInvokedUrlCommand*)command {
+    if (!self.isInitialized) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"SDK not initialized. Call initialize() first."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil && [options isKindOfClass:[NSDictionary class]]) {
         [self.interstitialExecutor createInterstitial:options command:command];
@@ -157,6 +169,11 @@
 }
 
 - (void)createRewarded:(CDVInvokedUrlCommand*)command {
+    if (!self.isInitialized) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"SDK not initialized. Call initialize() first."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil) {
         [self.rewardedExecutor createRewarded:options command:command];
@@ -168,6 +185,11 @@
 }
 
 - (void)loadAppOpenAd:(CDVInvokedUrlCommand*)command {
+    if (!self.isInitialized) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"SDK not initialized. Call initialize() first."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil) {
         [[AppOpenAdExecutor sharedInstance] loadAppOpenAd:options command:command];
@@ -179,6 +201,11 @@
 }
 
 - (void)createRewardedInterstitial:(CDVInvokedUrlCommand*)command {
+    if (!self.isInitialized) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"SDK not initialized. Call initialize() first."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
     NSDictionary *options = [command.arguments objectAtIndex:0];
     if (options != nil) {
         [self.rewardedInterstitialExecutor createRewardedInterstitial:options command:command];

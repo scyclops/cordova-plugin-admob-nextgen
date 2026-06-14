@@ -101,7 +101,6 @@
             self.isLoading = NO;
 
             if (error) {
-                self.rewardedInterstitialAd = nil;
 
                 NSString *jsonStr = [NSString stringWithFormat:@"{\"code\":%ld, \"message\":\"%@\"}", (long)error.code, [error localizedDescription]];
                 [self.plugin fireEvent:@"document" event:@"on.rewardedInter.failed.load" withData:jsonStr];
