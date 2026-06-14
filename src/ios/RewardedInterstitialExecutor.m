@@ -77,10 +77,10 @@
 
         if ((currentTime - self.lastLoadTime) < self.minLoadInterval) {
 
-            if (command) {
-                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Request too fast"];
-                [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-            }
+            NSString *errorMsg = [NSString stringWithFormat:@"Request too fast. Please wait %.0fms to prevent invalid traffic.", (self.minLoadInterval * 1000.0)];
+
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
+            [self.plugin.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             return;
         }
 
