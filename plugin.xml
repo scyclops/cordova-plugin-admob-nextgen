@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugin id="cordova-plugin-admob-nextgen" 
-        version="1.8.9" 
+        version="1.9.9" 
         xmlns="http://apache.org/cordova/ns/plugins/1.0" 
         xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -34,7 +34,7 @@
         <framework src="com.google.android.libraries.ads.mobile.sdk:ads-mobile-sdk:$NEXT_GEN_SDK_VERSION" />
         <framework src="com.google.android.ump:user-messaging-platform:$UMP_VERSION" />
 
-        <!-- Android | IOS -->
+        <!-- Android Next-Gen Classical API -->
         <source-file src="src/android/AdMobNextGen.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
         <source-file src="src/android/BannerExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
         <source-file src="src/android/NativeExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
@@ -44,7 +44,7 @@
         <source-file src="src/android/RewardedInterstitialExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
         <source-file src="src/android/ConsentExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
         <source-file src="src/android/GlobalSettingsExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen" />
-        <!-- Only Android -->
+        <!-- Android Next-Gen New Preloading API -->
         <source-file src="src/android/preloading/AppOpenAdPreloadExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen/preloading" />
         <source-file src="src/android/preloading/BannerPreloadExecutor.java" target-dir="app/src/main/java/com/emi/cordova/admob/nextgen/preloading" />
         <source-file src="src/android/preloading/InterstitialPreloadExecutor.java" target-dir="src/com/emi/cordova/admob/nextgen/preloading" />
@@ -53,7 +53,7 @@
         
     </platform>
 
-    <preference name="NEXT_GEN_SDK_VERSION" default="1.2.0" />
+    <preference name="NEXT_GEN_SDK_VERSION" default="1.2.1" />
     <preference name="UMP_VERSION" default="4.0.0" />
     <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
     <preference name="APP_ID_ANDROID" default="ca-app-pub-3940256099942544~3347511713" />
@@ -142,6 +142,7 @@
             </pods>
         </podspec>
 
+        <!--IOS SDK API 13+ -->
         <header-file src="src/ios/AdMobNextGen.h" />
         <source-file src="src/ios/AdMobNextGen.m" />
         <header-file src="src/ios/ConsentExecutor.h" />
