@@ -147,6 +147,7 @@ Add this to your `config.xml` to restore the plugin automatically.
 
 ### Supporting Mediation: **[⚡ admob-mediation-suite ](https://github.com/swaplab-engine/admob-mediation-suite)** (Optional)
 ### Supporting Native ads: **[⚡ cordova-plugin-admob-nextgen-native ](https://github.com/swaplab-engine/cordova-plugin-admob-nextgen-native)** (Optional)
+### New COPPA : **[⚡ cordova-plugin-play-age-signals ](https://github.com/swaplab-engine/cordova-plugin-play-age-signals)** (Optional)
 
 ---
 
