@@ -164,13 +164,11 @@ Add this to your `config.xml` to restore the plugin automatically.
 
 **IMPORTANT:** Configure Global Settings and handle Privacy Consent (UMP) **BEFORE** initializing the SDK.
 
-### Step 1: Global Configuration (Run First)
-
     // Optional: Mute ads globally
     admobNextGen.setAppVolume(0.5);
     admobNextGen.setAppMuted(true);
 
-### Step 2: Request Consent (UMP) & Initialize
+### Step 1: Request Consent (UMP) & Initialize
 
     // 1. Request Consent Information
     admobNextGen.requestConsentInfo({
@@ -215,7 +213,7 @@ Add this to your `config.xml` to restore the plugin automatically.
     }
 
 
-    // 4. Privacy options
+       // 4. Privacy options
         admobNextGen.showPrivacyOptionsForm(function() {
             startSdk();
         }, function(err) {
@@ -248,19 +246,81 @@ function checkAppTracking() {
 // admobNextGen.getTrackingAuthorizationStatus(success, error);
 ```   
 
-### Step 3: Check Consent Status (Smart Analysis)
-You can check if the user has granted permission for Personalized Ads without parsing complex IAB strings manually.
+### Step 2: Check Consent Status (Smart Analysis)
+- Understanding Consent Flags (`getTCData`)
 
-    admobNextGen.getTCData(function(data) {
-        // --- SMART ANALYSIS (Easy) ---
-        console.log("Personalized Allowed: " + data.isPersonalizedAllowed); // Boolean: true/false
-        console.log("Status: " + data.statusMessage);
+*(See [Publisher integration with the IAB Europe TCF](https://support.google.com/admanager/answer/9805023?hl=en#consent-policies))*
+> 
 
-        // --- RAW DATA (Expert) ---
-        console.log("TC String: " + data.tcString);
-        console.log("GDPR Applies: " + data.gdprApplies); // 1=Yes, 0=No
-        console.log("Purpose Consents: " + data.purposeConsents);
-    });
+When you call `admobNextGen.getTCData()`, the plugin returns a JSON object containing raw IAB TCF strings alongside pre-calculated boolean flags. To comply with AdMob's strict policies in GDPR regions, This plugin provide specific AdMob flags alongside the legacy flag.
+
+| Flag | Description | GDPR Requirements Checked |
+| :--- | :--- | :--- |
+| `isAdMobPersonalizedAdsAllowed` | **(Recommended)** Returns `true` if the user has granted all necessary consents for AdMob to serve **Personalized Ads**. | Consent for Purposes 1, 3, 4 **AND** (Consent or Legitimate Interest) for Purposes 2, 7, 9, 10 **AND** Vendor 755 (Google). |
+| `isAdMobNonPersonalizedAdsAllowed` | **(Recommended)** Returns `true` if the user has granted the minimum consent required for AdMob to serve **Non-Personalized Ads**. | Consent for Purpose 1 **AND** (Consent or Legitimate Interest) for Purposes 2, 7, 9, 10 **AND** Vendor 755 (Google). |
+| `isPersonalizedAllowed` | **(Legacy)** Preserved for backward compatibility with older app versions. **Not recommended for strict AdMob policy compliance.** | Consent for Purpose 1 only. |
+
+> **Note:** If the user is outside the GDPR region (e.g., USA, Indonesia), all of the ready-to-use flags above will return `true` by default.
+
+### A: Standard Usage (Ready-to-use Flags)
+For most users, relying on the built-in boolean flags is the easiest way to ensure AdMob compliance without parsing complex strings.
+
+```javascript
+// Request TC Data
+admobNextGen.getTCData(function(tcData) {
+
+    
+    console.log(tcData.adMobConsentStatus);
+    
+    if (tcData.isAdMobPersonalizedAdsAllowed) {
+        console.log("Consent met: AdMob can serve Personalized Ads.");
+        // Proceed to load ads...
+    } 
+    else if (tcData.isAdMobNonPersonalizedAdsAllowed) {
+        console.log("Consent met: AdMob will serve Non-Personalized Ads (Limited Ads).");
+        // Proceed to load ads...
+    } 
+    else {
+        console.log("Consent insufficient: AdMob cannot serve any ads.");
+        // You might want to show the privacy options form again here
+    }
+
+});
+```
+
+#### B: Advanced Usage (Raw Data Control)
+Advanced users who want full control over the consent logic can completely ignore the built-in boolean flags. The plugin exposes the raw IAB TCF data directly from the device's local storage (`purposeConsents`, `purposeLegitimateInterests`, `vendorConsents`, etc.), allowing you to manipulate and build custom conditions based on your own specific requirements.
+
+```javascript
+admobNextGen.getTCData(function(tcData) {
+    
+    // Ignore the built-in flags and parse the raw data yourself.
+    // Note: IAB TCF strings are 1-indexed, but JavaScript strings are 0-indexed.
+    // Index 0 represents Purpose 1, Index 2 represents Purpose 3, etc.
+    
+    const purposes = tcData.purposeConsents || "";
+    const lis = tcData.purposeLegitimateInterests || "";
+    const vendors = tcData.vendorConsents || "";
+
+    // const tcs = tcData.tcString;
+    // const region = tcData.gdprApplies;
+    
+    // Custom logic example: Check if Purpose 1 and Purpose 3 are explicitly granted
+    const hasPurpose1 = purposes.charAt(0) === '1';
+    const hasPurpose3 = purposes.charAt(2) === '1';
+    
+    // Check if Vendor 755 (Google) is granted (Index 754)
+    const hasGoogleVendor = vendors.charAt(754) === '1';
+    
+    if (hasPurpose1 && hasPurpose3 && hasGoogleVendor) {
+        console.log("Custom advanced condition met!");
+        // Your custom ad loading logic here
+    } else {
+        console.log("Custom advanced condition failed.");
+    }
+
+});
+```
 
 ---
 

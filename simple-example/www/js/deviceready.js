@@ -126,11 +126,27 @@ document.addEventListener("deviceready", function () {
     }
 
     // ===============================================
-
+    // https://support.google.com/admanager/answer/9805023?hl=en#consent-policies
     function checkTCData() {
-        admobNextGen.getTCData(function (data) {
-            console.log("Personalized Allowed: " + data.isPersonalizedAllowed);
-            if (window.logToScreen) window.logToScreen("Ads Personalized: " + data.isPersonalizedAllowed, "info");
+        admobNextGen.getTCData(function(tcData) {
+            
+            if (window.logToScreen) window.logToScreen(tcData.adMobConsentStatus);
+            
+            console.log(tcData.adMobConsentStatus);
+            
+            if (tcData.isAdMobPersonalizedAdsAllowed) {
+                console.log("Consent met: AdMob can serve Personalized Ads.");
+                // Proceed to load ads...
+            }
+            else if (tcData.isAdMobNonPersonalizedAdsAllowed) {
+                console.log("Consent met: AdMob will serve Non-Personalized Ads (Limited Ads).");
+                // Proceed to load ads...
+            }
+            else {
+                console.log("Consent insufficient: AdMob cannot serve any ads.");
+                // You might want to show the privacy options form again here
+            }
+
         });
     }
 

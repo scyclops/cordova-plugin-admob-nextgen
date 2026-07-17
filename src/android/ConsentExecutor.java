@@ -130,46 +130,97 @@ public class ConsentExecutor {
 
             String tcString = prefs.getString("IABTCF_TCString", "");
             String purposeConsents = prefs.getString("IABTCF_PurposeConsents", "");
+            String purposeLegitimateInterests = prefs.getString("IABTCF_PurposeLegitimateInterests", ""); 
             String vendorConsents = prefs.getString("IABTCF_VendorConsents", "");
             int gdprApplies = prefs.getInt("IABTCF_gdprApplies", 0);
 
             tcData.put("tcString", tcString);
             tcData.put("purposeConsents", purposeConsents);
+            tcData.put("purposeLegitimateInterests", purposeLegitimateInterests); 
             tcData.put("vendorConsents", vendorConsents);
             tcData.put("gdprApplies", gdprApplies);
 
             boolean isPersonalizedAllowed = false;
             String statusMessage = "Unknown";
 
+            boolean isAdMobPersonalizedAdsAllowed = false;
+            boolean isAdMobNonPersonalizedAdsAllowed = false;
+            String adMobConsentStatus = "Unknown";
+
             if (gdprApplies == 0) {
 
                 isPersonalizedAllowed = true;
                 statusMessage = "Not GDPR region. Personalized Ads allowed by default.";
+
+                isAdMobPersonalizedAdsAllowed = true;
+                isAdMobNonPersonalizedAdsAllowed = true;
+                adMobConsentStatus = "Not GDPR region. AdMob ads allowed by default.";
             } else {
 
                 if (purposeConsents != null && purposeConsents.length() > 0) {
                     char p1 = purposeConsents.charAt(0);
                     if (p1 == '1') {
                         isPersonalizedAllowed = true;
-                        statusMessage = "Purpose 1 Granted. Personalized Ads allowed.";
+                        statusMessage = "Purpose 1 Granted. Legacy check passed.";
                     } else {
                         isPersonalizedAllowed = false;
-                        statusMessage = "Purpose 1 Denied. Non-Personalized / Limited Ads only.";
+                        statusMessage = "Purpose 1 Denied. Legacy check failed.";
+                    }
+                }
+
+                boolean hasPurpose1 = checkConsent(purposeConsents, 1);
+                boolean hasPurpose3 = checkConsent(purposeConsents, 3);
+                boolean hasPurpose4 = checkConsent(purposeConsents, 4);
+
+                boolean hasRequiredLI_or_Consent = 
+                    hasConsentOrLI(purposeConsents, purposeLegitimateInterests, 2) &&
+                    hasConsentOrLI(purposeConsents, purposeLegitimateInterests, 7) &&
+                    hasConsentOrLI(purposeConsents, purposeLegitimateInterests, 9) &&
+                    hasConsentOrLI(purposeConsents, purposeLegitimateInterests, 10);
+
+                boolean hasVendorGoogle = checkConsent(vendorConsents, 755); 
+
+                if (hasPurpose1 && hasVendorGoogle && hasRequiredLI_or_Consent) {
+                    isAdMobNonPersonalizedAdsAllowed = true;
+
+                    if (hasPurpose3 && hasPurpose4) {
+                        isAdMobPersonalizedAdsAllowed = true;
+                        adMobConsentStatus = "Strict requirements met for Personalized Ads (Purposes 1,3,4 + LI 2,7,9,10 + Vendor 755).";
+                    } else {
+                        isAdMobPersonalizedAdsAllowed = false;
+                        adMobConsentStatus = "Requirements met for Non-Personalized Ads only.";
                     }
                 } else {
-
-                    isPersonalizedAllowed = false;
-                    statusMessage = "No consent data found (User hasn't answered yet).";
+                    isAdMobPersonalizedAdsAllowed = false;
+                    isAdMobNonPersonalizedAdsAllowed = false;
+                    adMobConsentStatus = "Insufficient strict consent (Missing P1, Vendor 755, or P2,7,9,10). Limited Ads only.";
                 }
             }
 
-            tcData.put("isPersonalizedAllowed", isPersonalizedAllowed); 
-            tcData.put("statusMessage", statusMessage); 
+            tcData.put("isPersonalizedAllowed", isPersonalizedAllowed);
+            tcData.put("statusMessage", statusMessage);
+
+            tcData.put("isAdMobPersonalizedAdsAllowed", isAdMobPersonalizedAdsAllowed);
+            tcData.put("isAdMobNonPersonalizedAdsAllowed", isAdMobNonPersonalizedAdsAllowed);
+            tcData.put("adMobConsentStatus", adMobConsentStatus);
 
             callbackContext.success(tcData);
         } catch (Exception e) {
             callbackContext.error("Failed to read TC Data: " + e.getMessage());
         }
+    }
+
+    private boolean checkConsent(String consentString, int id) {
+        if (consentString == null || consentString.length() < id) {
+            return false;
+        }
+        return consentString.charAt(id - 1) == '1';
+    }
+
+    private boolean hasConsentOrLI(String consents, String lis, int id) {
+        boolean hasConsent = checkConsent(consents, id);
+        boolean hasLI = checkConsent(lis, id);
+        return hasConsent || hasLI;
     }
 
     private String getDeviceId() {

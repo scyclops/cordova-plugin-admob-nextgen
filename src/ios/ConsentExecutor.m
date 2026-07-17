@@ -100,12 +100,14 @@
 
             NSString *tcString = [prefs stringForKey:@"IABTCF_TCString"] ?: @"";
             NSString *purposeConsents = [prefs stringForKey:@"IABTCF_PurposeConsents"] ?: @"";
+            NSString *purposeLegitimateInterests = [prefs stringForKey:@"IABTCF_PurposeLegitimateInterests"] ?: @""; 
             NSString *vendorConsents = [prefs stringForKey:@"IABTCF_VendorConsents"] ?: @"";
             NSString *additionalConsent = [prefs stringForKey:@"IABTCF_AddtlConsent"] ?: @"";
-            NSInteger gdprApplies = [prefs integerForKey:@"IABTCF_gdprApplies"]; 
+            NSInteger gdprApplies = [prefs integerForKey:@"IABTCF_gdprApplies"];
 
             tcData[@"tcString"] = tcString;
             tcData[@"purposeConsents"] = purposeConsents;
+            tcData[@"purposeLegitimateInterests"] = purposeLegitimateInterests; 
             tcData[@"vendorConsents"] = vendorConsents;
             tcData[@"additionalConsent"] = additionalConsent;
             tcData[@"gdprApplies"] = @(gdprApplies);
@@ -113,24 +115,55 @@
             BOOL isPersonalizedAllowed = NO;
             NSString *statusMessage = @"Unknown";
 
-            if (gdprApplies == 0) {
+            BOOL isAdMobPersonalizedAdsAllowed = NO;
+            BOOL isAdMobNonPersonalizedAdsAllowed = NO;
+            NSString *adMobConsentStatus = @"Unknown";
 
+            if (gdprApplies == 0) {
                 isPersonalizedAllowed = YES;
                 statusMessage = @"Not GDPR region. Personalized Ads allowed by default.";
+
+                isAdMobPersonalizedAdsAllowed = YES;
+                isAdMobNonPersonalizedAdsAllowed = YES;
+                adMobConsentStatus = @"Not GDPR region. AdMob ads allowed by default.";
             } else {
 
                 if (purposeConsents.length > 0) {
-
                     if ([purposeConsents hasPrefix:@"1"]) {
                         isPersonalizedAllowed = YES;
-                        statusMessage = @"Purpose 1 Granted. Personalized Ads allowed.";
+                        statusMessage = @"Purpose 1 Granted. Legacy check passed.";
                     } else {
                         isPersonalizedAllowed = NO;
-                        statusMessage = @"Purpose 1 Denied. Non-Personalized / Limited Ads only.";
+                        statusMessage = @"Purpose 1 Denied. Legacy check failed.";
+                    }
+                }
+
+                BOOL hasPurpose1 = [self checkConsent:purposeConsents consentId:1];
+                BOOL hasPurpose3 = [self checkConsent:purposeConsents consentId:3];
+                BOOL hasPurpose4 = [self checkConsent:purposeConsents consentId:4];
+
+                BOOL hasRequiredLI_or_Consent = 
+                    [self hasConsentOrLI:purposeConsents lis:purposeLegitimateInterests consentId:2] &&
+                    [self hasConsentOrLI:purposeConsents lis:purposeLegitimateInterests consentId:7] &&
+                    [self hasConsentOrLI:purposeConsents lis:purposeLegitimateInterests consentId:9] &&
+                    [self hasConsentOrLI:purposeConsents lis:purposeLegitimateInterests consentId:10];
+
+                BOOL hasVendorGoogle = [self checkConsent:vendorConsents consentId:755];
+
+                if (hasPurpose1 && hasVendorGoogle && hasRequiredLI_or_Consent) {
+                    isAdMobNonPersonalizedAdsAllowed = YES;
+
+                    if (hasPurpose3 && hasPurpose4) {
+                        isAdMobPersonalizedAdsAllowed = YES;
+                        adMobConsentStatus = @"Strict requirements met for Personalized Ads (Purposes 1,3,4 + LI 2,7,9,10 + Vendor 755).";
+                    } else {
+                        isAdMobPersonalizedAdsAllowed = NO;
+                        adMobConsentStatus = @"Requirements met for Non-Personalized Ads only.";
                     }
                 } else {
-                    isPersonalizedAllowed = NO;
-                    statusMessage = @"No consent data found (User hasn't answered yet).";
+                    isAdMobPersonalizedAdsAllowed = NO;
+                    isAdMobNonPersonalizedAdsAllowed = NO;
+                    adMobConsentStatus = @"Insufficient strict consent (Missing P1, Vendor 755, or P2,7,9,10). Limited Ads only.";
                 }
             }
 
@@ -143,6 +176,10 @@
             tcData[@"statusMessage"] = statusMessage;
             tcData[@"isACVersion2"] = @(isACVersion2);
 
+            tcData[@"isAdMobPersonalizedAdsAllowed"] = @(isAdMobPersonalizedAdsAllowed);
+            tcData[@"isAdMobNonPersonalizedAdsAllowed"] = @(isAdMobNonPersonalizedAdsAllowed);
+            tcData[@"adMobConsentStatus"] = adMobConsentStatus;
+
             if (command) {
                 CDVPluginResult* res = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:tcData];
                 [self.plugin.commandDelegate sendPluginResult:res callbackId:command.callbackId];
@@ -154,6 +191,20 @@
             }
         }
     });
+}
+
+- (BOOL)checkConsent:(NSString *)consentString consentId:(NSInteger)consentId {
+    if (!consentString || consentString.length < consentId) {
+        return NO;
+    }
+    unichar c = [consentString characterAtIndex:(consentId - 1)];
+    return c == '1';
+}
+
+- (BOOL)hasConsentOrLI:(NSString *)consents lis:(NSString *)lis consentId:(NSInteger)consentId {
+    BOOL hasConsent = [self checkConsent:consents consentId:consentId];
+    BOOL hasLI = [self checkConsent:lis consentId:consentId];
+    return hasConsent || hasLI;
 }
 
 - (void)showPrivacyOptionsForm:(CDVInvokedUrlCommand *)command {
