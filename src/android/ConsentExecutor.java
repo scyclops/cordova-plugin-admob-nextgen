@@ -18,6 +18,7 @@ import org.json.JSONObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
+import java.util.Map;
 
 import com.google.android.ump.ConsentDebugSettings;
 import com.google.android.ump.ConsentInformation;
@@ -47,6 +48,7 @@ public class ConsentExecutor {
                 boolean resetConsent = false;
                 boolean tagForUnderAgeOfConsent = false;
 
+                boolean tempShowFormIfRequired = true;
                 if (options != null) {
                     debugMode = options.optBoolean("debug", false);
                     manualTestDeviceId = options.optString("testDeviceId", "");
@@ -55,12 +57,16 @@ public class ConsentExecutor {
                     if (options.has("tagForUnderAgeOfConsent")) {
                         tagForUnderAgeOfConsent = options.getBoolean("tagForUnderAgeOfConsent");
                     }
+
+                    tempShowFormIfRequired = options.optBoolean("showFormIfRequired", true);
                 }
 
                 if (resetConsent) {
                     consentInformation.reset();
 
                 }
+
+                final boolean showFormIfRequired = tempShowFormIfRequired;
 
                 ConsentRequestParameters.Builder paramsBuilder = new ConsentRequestParameters.Builder();
                 paramsBuilder.setTagForUnderAgeOfConsent(tagForUnderAgeOfConsent);
@@ -94,21 +100,25 @@ public class ConsentExecutor {
 
                                 fireEvent("on.consent.info.update", null);
 
-                                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
-                                        activity,
-                                        (FormError loadAndShowError) -> {
-                                            if (loadAndShowError != null) {
+                                if (showFormIfRequired) {
+                                    UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                                            activity,
+                                            (FormError loadAndShowError) -> {
+                                                if (loadAndShowError != null) {
 
-                                                sendErrorEvent(loadAndShowError);
-                                                callbackContext.error(loadAndShowError.getMessage());
-                                            } else {
-
-                                                fireEvent("on.consent.form.dismissed", null);
-
-                                                sendConsentStatus(callbackContext);
+                                                    sendErrorEvent(loadAndShowError);
+                                                    callbackContext.error(loadAndShowError.getMessage());
+                                                } else {
+                                                    fireEvent("on.consent.form.dismissed", null);
+                                                    sendConsentStatus(callbackContext);
+                                                }
                                             }
-                                        }
-                                );
+                                    );
+                                } else {
+
+                                    sendConsentStatus(callbackContext);
+                                }
+
                             },
                             (FormError requestConsentError) -> {
 
@@ -128,15 +138,20 @@ public class ConsentExecutor {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(cordova.getActivity());
             JSONObject tcData = new JSONObject();
 
-            String tcString = prefs.getString("IABTCF_TCString", "");
+            Map<String, ?> allEntries = prefs.getAll();
+            for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+                if (entry.getKey().startsWith("IABTCF_")) {
+                    tcData.put(entry.getKey(), entry.getValue());
+                }
+            }
+
             String purposeConsents = prefs.getString("IABTCF_PurposeConsents", "");
             String purposeLegitimateInterests = prefs.getString("IABTCF_PurposeLegitimateInterests", ""); 
             String vendorConsents = prefs.getString("IABTCF_VendorConsents", "");
             int gdprApplies = prefs.getInt("IABTCF_gdprApplies", 0);
 
-            tcData.put("tcString", tcString);
             tcData.put("purposeConsents", purposeConsents);
-            tcData.put("purposeLegitimateInterests", purposeLegitimateInterests); 
+            tcData.put("purposeLegitimateInterests", purposeLegitimateInterests);
             tcData.put("vendorConsents", vendorConsents);
             tcData.put("gdprApplies", gdprApplies);
 

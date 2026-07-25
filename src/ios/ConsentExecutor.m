@@ -26,6 +26,8 @@
             BOOL resetConsent = options[@"reset"] ? [options[@"reset"] boolValue] : NO;
             BOOL tagForUnderAgeOfConsent = options[@"tagForUnderAgeOfConsent"] ? [options[@"tagForUnderAgeOfConsent"] boolValue] : NO;
 
+            BOOL showFormIfRequired = options[@"showFormIfRequired"] ? [options[@"showFormIfRequired"] boolValue] : YES;
+
             if (resetConsent) {
                 [UMPConsentInformation.sharedInstance reset];
 
@@ -65,22 +67,24 @@
 
                 [self.plugin fireEvent:@"document" event:@"on.consent.info.update" withData:nil];
 
-                [UMPConsentForm loadAndPresentIfRequiredFromViewController:self.plugin.viewController completionHandler:^(NSError * _Nullable loadAndPresentError) {
+                if (showFormIfRequired) {
+                    [UMPConsentForm loadAndPresentIfRequiredFromViewController:self.plugin.viewController completionHandler:^(NSError * _Nullable loadAndPresentError) {
 
-                    if (loadAndPresentError) {
-
-                        [self sendErrorEvent:loadAndPresentError];
-                        if (command) {
-                            CDVPluginResult* errRes = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:loadAndPresentError.localizedDescription];
-                            [self.plugin.commandDelegate sendPluginResult:errRes callbackId:command.callbackId];
+                        if (loadAndPresentError) {
+                            [self sendErrorEvent:loadAndPresentError];
+                            if (command) {
+                                CDVPluginResult* errRes = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:loadAndPresentError.localizedDescription];
+                                [self.plugin.commandDelegate sendPluginResult:errRes callbackId:command.callbackId];
+                            }
+                        } else {
+                            [self.plugin fireEvent:@"document" event:@"on.consent.form.dismissed" withData:nil];
+                            [self sendConsentStatus:command];
                         }
-                    } else {
+                    }];
+                } else {
 
-                        [self.plugin fireEvent:@"document" event:@"on.consent.form.dismissed" withData:nil];
-
-                        [self sendConsentStatus:command];
-                    }
-                }];
+                    [self sendConsentStatus:command];
+                }
             }];
 
         } @catch (NSException *exception) {
@@ -98,14 +102,19 @@
             NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
             NSMutableDictionary *tcData = [NSMutableDictionary dictionary];
 
-            NSString *tcString = [prefs stringForKey:@"IABTCF_TCString"] ?: @"";
+            NSDictionary *allDefaults = [prefs dictionaryRepresentation];
+            for (NSString *key in allDefaults) {
+                 if ([key hasPrefix:@"IABTCF_"]) {
+                 tcData[key] = allDefaults[key];
+                }
+            }
+
             NSString *purposeConsents = [prefs stringForKey:@"IABTCF_PurposeConsents"] ?: @"";
             NSString *purposeLegitimateInterests = [prefs stringForKey:@"IABTCF_PurposeLegitimateInterests"] ?: @""; 
             NSString *vendorConsents = [prefs stringForKey:@"IABTCF_VendorConsents"] ?: @"";
             NSString *additionalConsent = [prefs stringForKey:@"IABTCF_AddtlConsent"] ?: @"";
             NSInteger gdprApplies = [prefs integerForKey:@"IABTCF_gdprApplies"];
 
-            tcData[@"tcString"] = tcString;
             tcData[@"purposeConsents"] = purposeConsents;
             tcData[@"purposeLegitimateInterests"] = purposeLegitimateInterests; 
             tcData[@"vendorConsents"] = vendorConsents;

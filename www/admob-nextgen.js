@@ -15,10 +15,12 @@ var AdMobNextGen = {
     },
 
     setRequestConfiguration: function (config, success, error) {
+        config = config || {};
         exec(success, error, 'AdMobNextGen', 'setRequestConfiguration', [config]);
     },
 
     requestConsentInfo: function (options, success, error) {
+        options = options || {};
         exec(success, error, 'AdMobNextGen', 'requestConsentInfo', [options]);
     },
 

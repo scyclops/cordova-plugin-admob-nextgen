@@ -115,7 +115,7 @@ This plugin is regularly updated to support the latest standards.
 
 | Component | Platform | Version | Release Notes |
 | :--- | :--- | :--- | :--- |
-| **GMA Next-Gen SDK** | Android | **1.2.1** | [View Notes](https://developers.google.com/admob/android/next-gen/rel-notes) |
+| **GMA Next-Gen SDK** | Android | **1.3.0** | [View Notes](https://developers.google.com/admob/android/next-gen/rel-notes) |
 | **UMP SDK** | Android | **4.0.0** | [View Notes](https://developers.google.com/admob/android/privacy/release-notes) |
 | **Mobile Ads SDK** | iOS | **13.3.0** | [View Notes](https://developers.google.com/admob/ios/rel-notes) |
 | **UMP SDK** | iOS | **3.1.0** | [View Notes](https://developers.google.com/ad-manager/mobile-ads-sdk/ios/privacy/download) |
@@ -289,7 +289,10 @@ admobNextGen.getTCData(function(tcData) {
 ```
 
 #### B: Advanced Usage (Raw Data Control)
-Advanced users who want full control over the consent logic can completely ignore the built-in boolean flags. The plugin exposes the raw IAB TCF data directly from the device's local storage (`purposeConsents`, `purposeLegitimateInterests`, `vendorConsents`, etc.), allowing you to manipulate and build custom conditions based on your own specific requirements.
+
+Advanced users who want full control over the consent logic can completely ignore the built-in boolean flags. The plugin now dynamically extracts and exposes **ALL standard IAB TCF v2 keys** directly from the device's local storage. 
+
+This means you have full access to every `IABTCF_` prefixed key (such as `IABTCF_PurposeConsents`, `IABTCF_VendorLegitimateInterests`, `IABTCF_SpecialFeaturesOptIns`, etc.), allowing you to manipulate and build custom enum conditions based on your own specific architecture requirements.
 
 ```javascript
 admobNextGen.getTCData(function(tcData) {
@@ -298,21 +301,24 @@ admobNextGen.getTCData(function(tcData) {
     // Note: IAB TCF strings are 1-indexed, but JavaScript strings are 0-indexed.
     // Index 0 represents Purpose 1, Index 2 represents Purpose 3, etc.
     
-    const purposes = tcData.purposeConsents || "";
-    const lis = tcData.purposeLegitimateInterests || "";
-    const vendors = tcData.vendorConsents || "";
+    // You can use the standard IABTCF_ keys extracted dynamically by the plugin
+    const purposes = tcData.IABTCF_PurposeConsents || "";
+    const lis = tcData.IABTCF_PurposeLegitimateInterests || "";
+    const vendors = tcData.IABTCF_VendorConsents || "";
+    const vendorLIs = tcData.IABTCF_VendorLegitimateInterests || ""; 
 
-    // const tcs = tcData.tcString;
-    // const region = tcData.gdprApplies;
+    // const tcs = tcData.IABTCF_TCString;
+    // const region = tcData.IABTCF_gdprApplies;
     
     // Custom logic example: Check if Purpose 1 and Purpose 3 are explicitly granted
     const hasPurpose1 = purposes.charAt(0) === '1';
     const hasPurpose3 = purposes.charAt(2) === '1';
     
-    // Check if Vendor 755 (Google) is granted (Index 754)
-    const hasGoogleVendor = vendors.charAt(754) === '1';
+    // Check if Vendor 755 (Google) Consent OR Legitimate Interest is granted (Index 754)
+    const hasGoogleVendorConsent = vendors.charAt(754) === '1';
+    const hasGoogleVendorLI = vendorLIs.charAt(754) === '1';
     
-    if (hasPurpose1 && hasPurpose3 && hasGoogleVendor) {
+    if (hasPurpose1 && hasPurpose3 && (hasGoogleVendorConsent || hasGoogleVendorLI)) {
         console.log("Custom advanced condition met!");
         // Your custom ad loading logic here
     } else {
