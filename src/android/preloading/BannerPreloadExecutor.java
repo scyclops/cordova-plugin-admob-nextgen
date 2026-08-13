@@ -513,6 +513,20 @@ public class BannerPreloadExecutor {
                 webViewView.setLayoutParams(params);
                 webViewView.requestLayout();
 
+            } else if (isCordova15) {
+                webViewView.setTranslationY(0);
+                if (!isBannerVisible || isOverlapping) {
+                    params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
+                } else {
+                    if ("top".equalsIgnoreCase(currentPosition)) {
+                        params.setMargins(0, systemSafeTop + lastAdHeight, 0, systemSafeBottom);
+                    } else {
+                        params.setMargins(0, systemSafeTop, 0, systemSafeBottom + lastAdHeight);
+                    }
+                }
+                webViewView.setLayoutParams(params);
+                webViewView.requestLayout();
+
             } else {
 
                 if ("top".equalsIgnoreCase(currentPosition)) {
