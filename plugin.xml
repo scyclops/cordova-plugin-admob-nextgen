@@ -138,7 +138,7 @@
             </config>
             <pods use-frameworks="true">
                 <pod name="GoogleUserMessagingPlatform" spec="~> 3.1.0" />
-                <pod name="Google-Mobile-Ads-SDK" spec="~> 13.1.0" />
+                <pod name="Google-Mobile-Ads-SDK" spec="~> 13.8.0" />
             </pods>
         </podspec>
 
