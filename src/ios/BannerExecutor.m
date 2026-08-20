@@ -305,7 +305,7 @@
                   newWebFrame.size.height = screenH - newWebFrame.origin.y;
               } else {
                   newWebFrame.origin.y = safeArea.top;
-                  newWebFrame.size.height = bY;
+                  newWebFrame.size.height = bY - safeArea.top;
               }
               webView.frame = newWebFrame;
           } else {
