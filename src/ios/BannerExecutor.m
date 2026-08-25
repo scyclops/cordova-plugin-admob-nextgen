@@ -24,9 +24,6 @@
 @property(nonatomic, assign) NSTimeInterval lastLoadTime;
 @property(nonatomic, assign) NSTimeInterval minLoadInterval;
 
-@property (nonatomic, assign) BOOL isAdjustingLayout;
-@property (nonatomic, assign) BOOL isObserving;
-
 @end
 
 @implementation BannerExecutor
@@ -51,43 +48,17 @@
         self.lastLoadTime = 0;
         self.minLoadInterval = 5.0;
 
-        self.isAdjustingLayout = NO;
-
-        [self startObserving];
+        [[NSNotificationCenter defaultCenter]
+            addObserver:self
+               selector:@selector(layoutViews)
+                   name:UIDeviceOrientationDidChangeNotification
+                 object:nil];
     }
     return self;
 }
 
-- (void)startObserving {
-    if (!self.isObserving && self.plugin.viewController.view) {
-        [self.plugin.viewController.view addObserver:self
-                                          forKeyPath:@"bounds"
-                                             options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld
-                                             context:nil];
-        self.isObserving = YES;
-    }
-}
-
-- (void)stopObserving {
-    if (self.isObserving && self.plugin.viewController.view) {
-        @try {
-            [self.plugin.viewController.view removeObserver:self forKeyPath:@"bounds"];
-        } @catch (NSException * __unused exception) {}
-        self.isObserving = NO;
-    }
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath
-                      ofObject:(id)object
-                        change:(NSDictionary<NSKeyValueChangeKey,id> *)change
-                       context:(void *)context {
-    if ([keyPath isEqualToString:@"bounds"]) {
-        [self layoutViews];
-    }
-}
-
 - (void)dealloc {
-    [self stopObserving];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #pragma mark - Smart Window Helper
@@ -288,29 +259,33 @@
 
 - (void)layoutViews {
     dispatch_async(dispatch_get_main_queue(), ^{
-      if (self.isAdjustingLayout) return;
-
       UIViewController *rootVC = self.plugin.viewController;
       UIView *webView = self.plugin.webView;
-      if (!rootVC || !webView || !rootVC.view) return;
+      if (!rootVC || !webView)
+          return;
 
-      self.isAdjustingLayout = YES;
+      UIWindow *window = [self getKeyWindow];
+      UIEdgeInsets safeArea =
+          (window) ? window.safeAreaInsets : UIEdgeInsetsZero;
 
-      CGRect rootBounds = rootVC.view.bounds;
-      CGFloat screenW = rootBounds.size.width;
-      CGFloat screenH = rootBounds.size.height;
+      CGFloat screenH = UIScreen.mainScreen.bounds.size.height;
+      CGFloat screenW = UIScreen.mainScreen.bounds.size.width;
 
-      UIEdgeInsets safeArea = UIEdgeInsetsZero;
-      if (@available(iOS 11.0, *)) {
-        safeArea = rootVC.view.safeAreaInsets;
-      }
+      if (safeArea.bottom == 0 && screenH >= 812.0)
+          safeArea.bottom = 34.0;
+      if (safeArea.top == 0 && screenH >= 812.0)
+          safeArea.top = 44.0;
 
-      CGRect fullScreenRect = rootBounds;
+      CGRect fullScreenRect = CGRectMake(0, 0, screenW, screenH);
 
-      if (self.isBannerVisible && self.bannerView && self.activeBannerHeight > 0) {
+      if (self.isBannerVisible && self.bannerView &&
+          self.activeBannerHeight > 0) {
+
           CGSize adSize = self.bannerView.intrinsicContentSize;
-          CGFloat bH = adSize.height > 0 ? adSize.height : self.activeBannerHeight;
-          CGFloat bW = adSize.width > 0 ? adSize.width : self.bannerView.bounds.size.width;
+          CGFloat bH =
+              adSize.height > 0 ? adSize.height : self.activeBannerHeight;
+          CGFloat bW = adSize.width > 0 ? adSize.width
+                                        : self.bannerView.bounds.size.width;
           CGFloat bX = (screenW - bW) / 2.0;
           CGFloat bY = 0;
 
@@ -337,17 +312,14 @@
               webView.frame = fullScreenRect;
           }
       } else {
-          if (self.bannerView) {
+          if (self.bannerView)
               self.bannerView.hidden = YES;
-          }
           webView.frame = fullScreenRect;
       }
 
       if (self.bannerView && self.isBannerVisible) {
-          [rootVC.view bringSubviewToFront:self.bannerView];
+          [webView.superview bringSubviewToFront:self.bannerView];
       }
-
-      self.isAdjustingLayout = NO;
     });
 }
 
