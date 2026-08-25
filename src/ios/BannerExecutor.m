@@ -192,6 +192,8 @@
 
     UIViewController *rootViewController = self.plugin.viewController;
 
+    rootViewController.view.backgroundColor = [UIColor blackColor];
+
     GADAdSize adSize = [self getAdSize:sizeStr];
     self.lastAdSize = adSize;
 
