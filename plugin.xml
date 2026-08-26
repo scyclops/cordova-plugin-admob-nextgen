@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugin id="cordova-plugin-admob-nextgen" 
-        version="2.0.1" 
+        version="2.0.2-beta.2" 
         xmlns="http://apache.org/cordova/ns/plugins/1.0" 
         xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -26,6 +26,7 @@
         
         <config-file parent="/*" target="AndroidManifest.xml">
             <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
         </config-file>
 
         <!-- hooks: Prevent conflicts with legacy SDKs when using mediation -->
