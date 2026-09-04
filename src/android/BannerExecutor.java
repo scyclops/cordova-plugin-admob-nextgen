@@ -637,14 +637,18 @@ public class BannerExecutor {
 
                 if (!isBannerVisible || isOverlapping) {
 
-                    params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
+                    //params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
+                    params.setMargins(0, 0, 0, 0);
+
                 } else {
                     if ("top".equalsIgnoreCase(currentPosition)) {
 
-                        params.setMargins(0, systemSafeTop + lastAdHeight, 0, systemSafeBottom);
+                        //params.setMargins(0, systemSafeTop + lastAdHeight, 0, systemSafeBottom);
+                        params.setMargins(0, lastAdHeight, 0, 0);
                     } else {
 
-                        params.setMargins(0, systemSafeTop, 0, systemSafeBottom + lastAdHeight);
+                        //params.setMargins(0, systemSafeTop, 0, systemSafeBottom + lastAdHeight);
+                        params.setMargins(0, 0, 0, lastAdHeight);
                     }
                 }
 
