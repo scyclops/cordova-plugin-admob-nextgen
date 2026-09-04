@@ -13,5 +13,10 @@
     <plugin name="cordova-plugin-admob-nextgen" spec="https://github.com/swaplab-engine/cordova-plugin-admob-nextgen.git">
     <variable name="APP_ID_ANDROID" value="ca-app-pub-3940256099942544~3347511713" />
     <variable name="APP_ID_IOS" value="ca-app-pub-3940256099942544~1458002511" />
+
+    <platform name="ios">
+       <preference name="deployment-target" value="15.0" />
+    </platform>
+    
 </plugin>
 </widget>
