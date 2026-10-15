@@ -15,6 +15,7 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -609,74 +610,27 @@ public class BannerExecutor {
         if (lp instanceof ViewGroup.MarginLayoutParams) {
             ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) lp;
 
-            if (isCapacitor) {
-
-                int screenHeightInPx = getScreenHeightInPx();
-
-                if (!isBannerVisible || isOverlapping) {
-                    params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                    params.topMargin = 0;
-                    params.bottomMargin = 0;
-                } else {
-                    if ("top".equalsIgnoreCase(currentPosition)) {
-                        params.topMargin = lastAdHeight;
-                        params.bottomMargin = 0;
-                        params.height = screenHeightInPx - lastAdHeight;
-                    } else {
-                        int webViewHeight = screenHeightInPx - lastAdHeight;
-                        params.height = webViewHeight;
-                        params.topMargin = 0;
-                    }
-                }
-
+            if (!isBannerVisible || isOverlapping) {
+                // clear any translation we set previously
                 webViewView.setTranslationY(0);
 
-            } else if (isCordova15) {
-
-                webViewView.setTranslationY(0);
-
-                if (!isBannerVisible || isOverlapping) {
-
-                    //params.setMargins(0, systemSafeTop, 0, systemSafeBottom);
-                    params.setMargins(0, 0, 0, 0);
-
-                } else {
-                    if ("top".equalsIgnoreCase(currentPosition)) {
-
-                        //params.setMargins(0, systemSafeTop + lastAdHeight, 0, systemSafeBottom);
-                        params.setMargins(0, lastAdHeight, 0, 0);
-                    } else {
-
-                        //params.setMargins(0, systemSafeTop, 0, systemSafeBottom + lastAdHeight);
-                        params.setMargins(0, 0, 0, lastAdHeight);
-                    }
-                }
-
-            } else {
-
-                if ("top".equalsIgnoreCase(currentPosition)) {
-                    params.setMargins(0, 0, 0, 0);
-
-                    if (isBannerVisible && !isOverlapping) {
-                        float shift = (float) (lastAdHeight + systemSafeTop);
-                        webViewView.setTranslationY(shift);
-                    } else {
-                        webViewView.setTranslationY(0);
-                    }
-                } else {
-                    webViewView.setTranslationY(0);
-
-                    if (!isBannerVisible || isOverlapping) {
-                        params.setMargins(0, 0, 0, 0);
-                    } else {
-                        int finalBottom = lastAdHeight + systemSafeBottom;
-                        params.setMargins(0, 0, 0, finalBottom);
-                    }
-                }
+                // reset the bottom margin to what cordova set it to
+                // triggers cordova's OnApplyWindowInsetsListener to set the margins it needs
+                ViewCompat.requestApplyInsets(webViewView.getRootView());
+                return;
             }
 
-            webViewView.setLayoutParams(params);
-            webViewView.requestLayout();
+            if ("top".equalsIgnoreCase(currentPosition)) {
+                webViewView.setTranslationY(lastAdHeight);
+            } else {
+                webViewView.setTranslationY(0);
+
+                params.bottomMargin = lastAdHeight;
+                // not taking keyboard into account b/c ads don't show when keyboard is visible
+
+                webViewView.setLayoutParams(params);
+                webViewView.requestLayout();
+            }
         }
     }
 
